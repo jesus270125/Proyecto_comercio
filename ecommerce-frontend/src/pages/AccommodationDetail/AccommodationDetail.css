@@ -1,0 +1,120 @@
+/* AccommodationDetail styles — extends exp-detail */
+.acc-detail { padding-top: 0; }
+
+.acc-detail__gallery {}
+.acc-detail__gallery-main {
+  position: relative;
+  height: 540px;
+  overflow: hidden;
+  background: var(--gray-900);
+}
+
+/* Sombra degradada superior para contraste nítido del navbar */
+.acc-detail__gallery-main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  background: linear-gradient(to bottom, rgba(10, 25, 10, 0.75) 0%, rgba(10, 25, 10, 0.35) 55%, transparent 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.acc-detail__gallery-img { width: 100%; height: 100%; object-fit: cover; }
+
+.acc-detail__layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: var(--space-12);
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-20);
+  align-items: start;
+}
+
+.acc-detail__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.acc-detail__header {}
+.acc-detail__meta-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.acc-detail__title {
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: var(--space-5);
+}
+
+/* Amenities */
+.acc-detail__amenities {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.acc-detail__amenity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  padding: var(--space-3) var(--space-4);
+  background: var(--gray-100);
+  border-radius: var(--radius);
+}
+
+.acc-detail__amenity-icon {
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Booking form */
+.acc-detail__booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.acc-detail__dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* Price calc */
+.acc-detail__calc {
+  background: var(--gray-100);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.acc-detail__total {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-base);
+}
+
+@media (max-width: 1024px) {
+  .acc-detail__layout { grid-template-columns: 1fr; }
+  .acc-detail__gallery-main { height: 440px; }
+}
+
+@media (max-width: 640px) {
+  .acc-detail__gallery-main { height: 340px; }
+  .acc-detail__amenities { grid-template-columns: 1fr; }
+  .acc-detail__dates { grid-template-columns: 1fr; }
+}

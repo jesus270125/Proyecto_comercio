@@ -1,0 +1,771 @@
+PROMPT MAESTRO PARA CLAUDE CODE / ANTIGRAVITY PROYECTO: PLATAFORMA WEB
+DE TURISMO Y HOSPEDAJES EN APURÍMAC RESPONSABLE: JESÚS ALEJANDRO MORÓN
+LUNA VERSIÓN ACTUAL: V1 — SOLO FRONTEND CON REACT
+
+============================================================ 1. CONTEXTO
+DEL PROYECTO
+============================================================
+
+Estoy desarrollando un proyecto universitario para la asignatura de
+Desarrollo de Aplicaciones Web con React y Node.js.
+
+El proyecto asignado es:
+
+“Reservas de hospedajes/turismo vivencial en Apurímac”
+
+Responsable: Morón Luna, Jesús Alejandro.
+
+IMPORTANTE: Esta es solamente la VERSIÓN 1 del proyecto.
+
+Según la planificación del curso, en esta versión se debe trabajar: -
+Frontend en React. - Datos de prueba/mock data. - Navegación entre
+páginas con React Router. - Formularios funcionales, pero sin
+persistencia real. - Diseño responsive. - Componentización. - Manejo de
+estado con useState/useEffect cuando sea necesario. - Coherencia y
+calidad de UI/UX.
+
+NO implementar todavía: - Backend Node.js/Express. - API REST real. -
+Base de datos. - MongoDB/PostgreSQL/MySQL. - Autenticación real. - Login
+conectado a servidor. - Pagos reales. - Persistencia real. - Servicios
+externos que requieran backend.
+
+La arquitectura debe quedar preparada para que posteriormente pueda
+agregarse backend, base de datos, autenticación y pagos sin tener que
+rehacer completamente el frontend.
+
+============================================================ 2. IDEA
+GENERAL DEL PRODUCTO
+============================================================
+
+NO quiero crear simplemente una página de hoteles.
+
+La idea es construir una plataforma moderna de turismo de Apurímac que
+combine:
+
+1.  DESCUBRIMIENTO DE DESTINOS.
+2.  EXPERIENCIAS TURÍSTICAS.
+3.  TURISMO VIVENCIAL.
+4.  HOSPEDAJES.
+5.  RESERVAS.
+
+La propuesta conceptual es:
+
+“Descubre Apurímac de una forma diferente.”
+
+La plataforma permitirá que un visitante pueda descubrir lugares y
+experiencias de Apurímac y, dependiendo de la experiencia, encontrar
+hospedajes relacionados y realizar una reserva simulada.
+
+Ejemplo:
+
+Un usuario quiere conocer Choquequirao.
+
+Puede encontrar: - Información de la experiencia. - Duración. -
+Categoría. - Actividades. - Hospedajes relacionados. - Precio
+referencial. - Fecha. - Número de personas. - Opción para reservar.
+
+También debe existir la posibilidad de explorar hospedajes de manera
+independiente.
+
+Por lo tanto, el producto tendrá dos grandes caminos:
+
+A)  EXPERIENCIAS Descubrir una experiencia → ver detalles → seleccionar
+    fecha/personas → reservar.
+
+B)  HOSPEDAJES Explorar hospedajes → ver detalle → seleccionar
+    fecha/personas → reservar.
+
+La reserva será simulada en V1. No debe realizarse ningún pago real.
+
+============================================================ 3.
+REFERENCIAS VISUALES
+============================================================
+
+Quiero tomar inspiración visual, NO copiar literalmente.
+
+Referencia 1: https://vita-travel.webflow.io/#retreats
+
+De esta referencia me gustan especialmente: - El uso de fotografías
+grandes. - La fotografía como protagonista. - Hero visual de gran
+tamaño. - Texto grande sobre fotografías. - Buscador integrado en la
+portada. - Tarjetas visuales. - Información breve y bien organizada. -
+Espacios blancos. - Bordes redondeados. - Diseño elegante y moderno. -
+Sensación de plataforma turística real. - La manera en que las imágenes
+y la información se combinan. - La paleta natural, clara y sofisticada.
+
+Referencia 2:
+https://www.behance.net/gallery/239339205/Hide-Tree-Glamping/modules/1423715513
+
+De esta referencia me interesa: - Estética relacionada con naturaleza y
+hospedaje. - Fotografías inmersivas. - Tonos naturales. - Sensación
+premium pero cálida. - Tarjetas y elementos flotantes. - Diseño
+limpio. - Integración entre fotografía, naturaleza y contenido.
+
+NO copies ninguna de estas páginas. NO reproduzcas su branding. NO
+copies textos. NO copies logos. NO clones su estructura exacta.
+
+Úsalas solamente como referencias de dirección visual.
+
+============================================================ 4.
+IDENTIDAD VISUAL PROPUESTA
+============================================================
+
+La interfaz debe sentirse:
+
+-   Natural.
+-   Elegante.
+-   Moderna.
+-   Turística.
+-   Premium pero accesible.
+-   Cálida.
+-   Profesional.
+-   Inspirada en Apurímac.
+-   Visualmente limpia.
+
+Evitar: - Diseño genérico de dashboard. - Exceso de colores. - Exceso de
+iconos. - Emojis en la interfaz. - Gradientes exagerados. - Animaciones
+excesivas. - Aspecto de plantilla genérica. - Interfaz demasiado
+corporativa. - Tarjetas pequeñas con demasiada información.
+
+PALETA BASE:
+
+Utilizar principalmente: - Verde natural / verde oliva. - Verde oscuro
+para elementos importantes. - Crema / beige claro. - Blanco. - Tonos
+tierra muy sutiles. - Gris oscuro para texto.
+
+La combinación debe recordar: naturaleza + montañas + hospedaje +
+turismo rural + elegancia.
+
+No utilizar una gran variedad de colores.
+
+La interfaz debe tener suficiente espacio en blanco.
+
+============================================================ 5. IDEA DE
+MARCA ============================================================
+
+Puedes utilizar temporalmente como nombre visual:
+
+“APURÍMAC”
+
+o una variante de marca que tenga relación con turismo y experiencias.
+
+Tagline sugerido:
+
+“Vive el lugar. Quédate en él.”
+
+Otra posibilidad:
+
+“Descubre Apurímac de una forma diferente.”
+
+No convertir esto en una decisión rígida si encuentras una alternativa
+visualmente mejor, pero NO cambies el concepto principal del proyecto.
+
+No utilizar logos oficiales de instituciones.
+
+Si necesitas un logo temporal, crea uno textual/minimalista relacionado
+con naturaleza y turismo.
+
+============================================================ 6.
+ESTRUCTURA GENERAL DE LA V1
+============================================================
+
+Construye como mínimo las siguientes páginas:
+
+1.  INICIO
+2.  EXPLORAR EXPERIENCIAS
+3.  EXPLORAR HOSPEDAJES
+4.  DETALLE DE EXPERIENCIA
+5.  DETALLE DE HOSPEDAJE
+6.  RESERVA
+7.  CONFIRMACIÓN DE RESERVA
+
+Opcionalmente puedes crear páginas auxiliares si realmente mejoran la
+experiencia, pero no agregues páginas innecesarias.
+
+============================================================ 7. PÁGINA
+INICIO ============================================================
+
+La página de inicio debe ser la más visual.
+
+ESTRUCTURA:
+
+A. NAVBAR
+
+Debe incluir: - Logo/nombre de la plataforma. - Inicio. -
+Experiencias. - Hospedajes. - Destinos. - Una acción clara para
+explorar.
+
+Navbar limpio y elegante.
+
+Debe funcionar correctamente en móvil.
+
+B. HERO
+
+Crear una sección hero de gran impacto visual.
+
+Debe utilizar una imagen grande relacionada con: - Montañas. - Paisajes
+de Apurímac. - Turismo. - Naturaleza. - Experiencias.
+
+Texto sugerido:
+
+“Descubre Apurímac de una forma diferente.”
+
+Texto secundario:
+
+“Vive experiencias auténticas, conoce nuestras comunidades y encuentra
+hospedajes donde el viaje se convierte en una experiencia.”
+
+Agregar CTA:
+
+“Explorar experiencias”
+
+Y otro CTA secundario:
+
+“Ver hospedajes”
+
+C. BUSCADOR
+
+Debe integrarse visualmente en el hero o inmediatamente debajo.
+
+Campos visuales: - Destino. - Tipo de experiencia o hospedaje. -
+Fecha. - Personas. - Botón Buscar.
+
+En V1 la búsqueda puede funcionar sobre mock data mediante filtros del
+frontend.
+
+NO conectar a backend.
+
+D. EXPERIENCIAS DESTACADAS
+
+Título:
+
+“Experiencias que puedes vivir”
+
+Mostrar tarjetas grandes y visuales.
+
+Ejemplos: - Choquequirao. - Cañón del Apurímac. - Turismo vivencial. -
+Saywite. - Naturaleza y aventura. - Gastronomía local.
+
+Cada tarjeta debe incluir: - Imagen. - Nombre. - Ubicación. -
+Categoría. - Descripción corta. - Precio referencial o “Desde”. - CTA.
+
+E. SECCIÓN DESTINO / HISTORIA
+
+Crear una sección editorial con: - Fotografía grande. - Texto. -
+Información sobre Apurímac. - CTA.
+
+Debe sentirse como una revista de viajes, no como un sistema
+administrativo.
+
+F. HOSPEDAJES DESTACADOS
+
+Mostrar 3 a 6 hospedajes.
+
+Cada tarjeta: - Imagen grande. - Nombre. - Ubicación. - Tipo. -
+Calificación ficticia. - Precio por noche. - CTA “Ver hospedaje”.
+
+G. CATEGORÍAS
+
+Mostrar visualmente categorías como: - Aventura. - Naturaleza. -
+Cultura. - Turismo vivencial. - Gastronomía. - Descanso.
+
+H. CÓMO FUNCIONA
+
+Explicar de manera simple:
+
+1.  Explora.
+2.  Elige una experiencia o hospedaje.
+3.  Selecciona fecha y personas.
+4.  Reserva.
+
+I. TESTIMONIOS
+
+Usar datos ficticios claramente tratados como mock data.
+
+No utilizar personas reales.
+
+J. FOOTER
+
+Incluir: - Marca. - Navegación. - Información. - Redes sociales como
+elementos visuales si corresponde. - Copyright.
+
+============================================================ 8. PÁGINA
+EXPLORAR EXPERIENCIAS
+============================================================
+
+Crear una página dedicada a experiencias.
+
+Debe tener:
+
+-   Encabezado visual.
+-   Buscador.
+-   Filtros.
+-   Grid de tarjetas.
+
+Filtros: - Categoría. - Ubicación. - Duración. - Precio. - Tipo de
+experiencia.
+
+Ejemplo:
+
+[ Todas ] [ Aventura ] [ Cultura ] [ Naturaleza ] [ Vivencial ]
+
+Las tarjetas deben ser visualmente grandes.
+
+Cada experiencia debe tener mock data.
+
+============================================================ 9. PÁGINA
+EXPLORAR HOSPEDAJES
+============================================================
+
+Crear una página similar a una plataforma de reservas moderna, pero con
+identidad propia.
+
+Filtros: - Ubicación. - Tipo de hospedaje. - Precio. - Servicios. -
+Calificación.
+
+Tipos: - Casa vivencial. - Hospedaje rural. - Hotel. - Cabaña. - Lodge.
+
+Mostrar: - Imagen. - Nombre. - Ubicación. - Rating. - Precio. -
+Características. - CTA.
+
+============================================================ 10. DETALLE
+DE EXPERIENCIA
+============================================================
+
+Esta página debe ser visualmente importante.
+
+Ejemplo:
+
+CHOQUEQUIRAO
+
+“Una experiencia entre montañas, historia y aventura.”
+
+Mostrar: - Galería de imágenes. - Ubicación. - Duración. - Categoría. -
+Dificultad si aplica. - Precio. - Descripción. - Qué incluye. - Qué no
+incluye. - Itinerario de ejemplo. - Hospedajes relacionados. -
+Recomendaciones. - Botón “Reservar experiencia”.
+
+Ejemplo de información:
+
+Duración: 3 días / 2 noches
+
+Incluye: - Hospedaje. - Alimentación. - Guía local. - Actividades
+indicadas.
+
+No incluye: - Gastos personales. - Servicios no especificados.
+
+IMPORTANTE: Estos datos son ficticios/de demostración para la V1.
+
+============================================================ 11. DETALLE
+DE HOSPEDAJE
+============================================================
+
+Mostrar:
+
+-   Galería de imágenes.
+-   Nombre.
+-   Ubicación.
+-   Calificación.
+-   Precio.
+-   Descripción.
+-   Servicios.
+-   Tipo de alojamiento.
+-   Capacidad.
+-   Habitaciones.
+-   Experiencias cercanas.
+-   Fecha.
+-   Número de personas.
+-   CTA “Reservar”.
+
+Diseñar la página con una estética similar a una plataforma turística
+premium.
+
+============================================================ 12. FLUJO
+DE RESERVA ============================================================
+
+Crear un formulario de reserva.
+
+Campos:
+
+-   Nombre.
+-   Apellido.
+-   Correo.
+-   Teléfono.
+-   Fecha de llegada.
+-   Fecha de salida.
+-   Número de personas.
+-   Alojamiento/experiencia seleccionada.
+-   Observaciones.
+
+Mostrar un resumen lateral:
+
+Reserva: [Nombre]
+
+Fecha: [Fecha]
+
+Personas: [Cantidad]
+
+Precio: [S/ …]
+
+Total: [S/ …]
+
+Botón:
+
+“Confirmar reserva”
+
+En V1 NO realizar pago real.
+
+Al confirmar: mostrar página de confirmación.
+
+============================================================ 13.
+CONFIRMACIÓN
+============================================================
+
+Mostrar una pantalla elegante:
+
+“Reserva confirmada”
+
+Número de reserva ficticio.
+
+Resumen: - Experiencia/hospedaje. - Fecha. - Personas. - Precio. - Datos
+del cliente.
+
+Estado:
+
+“Reserva registrada”
+
+Agregar botón: “Volver al inicio”
+
+Y opcionalmente: “Ver mis reservas”
+
+Pero recordar que no existe persistencia real en V1.
+
+============================================================ 14. MOCK
+DATA ============================================================
+
+Crear archivos separados para los datos de prueba.
+
+Por ejemplo:
+
+src/data/experiences.js src/data/accommodations.js
+src/data/destinations.js src/data/testimonials.js
+
+NO llenar componentes con enormes arrays directamente.
+
+Usar datos suficientemente variados para que la interfaz se vea real.
+
+Crear aproximadamente: - 8-12 experiencias. - 8-12 hospedajes. - 5-8
+destinos. - 5-6 testimonios.
+
+Los datos deben estar relacionados con Apurímac.
+
+Ejemplos de lugares: - Abancay. - Curahuasi. - Andahuaylas. -
+Andahuaylillas si corresponde solamente como ejemplo y evitando
+presentarlo incorrectamente como Apurímac. - Choquequirao como
+experiencia vinculada al contexto turístico regional. - Saywite. - Cañón
+del Apurímac. - Comunidades rurales.
+
+IMPORTANTE: No inventar datos oficiales ni afirmar información turística
+real que no se haya verificado. Cuando se utilicen datos ficticios,
+tratarlos como contenido demostrativo.
+
+============================================================ 15.
+IMÁGENES ============================================================
+
+Las imágenes son MUY importantes para este proyecto.
+
+No quiero una interfaz llena de placeholders grises.
+
+Si el entorno permite utilizar imágenes remotas públicas, utilizar
+imágenes apropiadas para: - Montañas. - Paisajes. - Hospedajes. -
+Naturaleza. - Turismo rural. - Cultura. - Aventura.
+
+Preferir imágenes grandes y de alta calidad.
+
+Las imágenes deben tener: - object-fit: cover. - border-radius
+coherente. - proporciones cuidadas. - buen contraste con el texto.
+
+NO utilizar imágenes aleatorias que no tengan relación con el contenido.
+
+Si no es posible garantizar imágenes externas estables, estructura el
+proyecto para que posteriormente puedan reemplazarse fácilmente por
+archivos locales.
+
+============================================================ 16.
+ANIMACIONES ============================================================
+
+Usar animaciones sutiles:
+
+-   Fade-in.
+-   Hover suave.
+-   Elevación ligera de tarjetas.
+-   Transiciones de botones.
+-   Aparición progresiva de contenido.
+
+NO exagerar.
+
+No quiero una página llena de efectos.
+
+La fotografía y el contenido deben ser protagonistas.
+
+============================================================ 17.
+RESPONSIVE ============================================================
+
+Debe funcionar correctamente en:
+
+-   Desktop.
+-   Laptop.
+-   Tablet.
+-   Móvil.
+
+En móvil: - Navbar colapsado. - Cards en una columna. - Buscador
+adaptado. - Botones accesibles. - Galerías adaptadas. - Texto legible.
+
+No permitir overflow horizontal.
+
+============================================================ 18.
+ARQUITECTURA REACT
+============================================================
+
+Utilizar componentes reutilizables.
+
+Una posible estructura:
+
+src/ components/ Navbar/ Footer/ Hero/ SearchBar/ ExperienceCard/
+AccommodationCard/ CategoryCard/ TestimonialCard/ Gallery/ BookingForm/
+BookingSummary/
+
+pages/ Home/ Experiences/ ExperienceDetail/ Accommodations/
+AccommodationDetail/ Booking/ BookingConfirmation/
+
+data/ experiences.js accommodations.js destinations.js testimonials.js
+
+routes/
+
+assets/
+
+App.jsx main.jsx
+
+Puedes mejorar esta estructura si existe una alternativa más limpia.
+
+============================================================ 19. REACT
+ROUTER ============================================================
+
+Implementar navegación real entre páginas.
+
+Rutas aproximadas:
+
+/ /experiencias /experiencias/:id /hospedajes /hospedajes/:id /reservar
+/confirmacion
+
+Los enlaces y botones deben funcionar.
+
+No crear botones que parezcan funcionales pero no hagan nada.
+
+============================================================ 20. ESTADO
+Y FUNCIONALIDAD V1
+============================================================
+
+Usar useState/useEffect donde tenga sentido.
+
+Implementar funcionalmente:
+
+-   Filtros.
+-   Búsqueda.
+-   Selección de categorías.
+-   Formularios.
+-   Validación básica del frontend.
+-   Selección de fechas.
+-   Cantidad de personas.
+-   Cálculo del total de forma local.
+-   Navegación.
+-   Confirmación de reserva.
+
+No persistir datos.
+
+No utilizar localStorage como sustituto de una base de datos salvo que
+sea estrictamente necesario para una pequeña interacción visual;
+preferentemente mantener el alcance simple de V1.
+
+============================================================ 21. CALIDAD
+VISUAL ============================================================
+
+Quiero que prestes especial atención a:
+
+-   Espaciado.
+-   Jerarquía visual.
+-   Tipografía.
+-   Tamaño de imágenes.
+-   Contraste.
+-   Consistencia.
+-   Estados hover.
+-   Botones.
+-   Cards.
+-   Responsive.
+-   Alineación.
+-   Márgenes.
+-   Microinteracciones.
+
+La aplicación debe parecer un producto real.
+
+No quiero que parezca una plantilla generada automáticamente.
+
+============================================================ 22. REGLAS
+IMPORTANTES ============================================================
+
+1.  Primero inspecciona el proyecto existente antes de modificar
+    archivos.
+
+2.  Si ya existe una aplicación React, trabaja sobre ella y conserva lo
+    que sea útil.
+
+3.  No destruyas funcionalidades existentes sin motivo.
+
+4.  Si necesitas reorganizar componentes, hazlo de manera limpia.
+
+5.  Evita duplicación de código.
+
+6.  Usa componentes reutilizables.
+
+7.  Mantén nombres de archivos y componentes claros.
+
+8.  Mantén el código fácil de mantener.
+
+9.  No implementes backend todavía.
+
+10. No implementes base de datos todavía.
+
+11. No implementes pagos reales.
+
+12. No agregues autenticación real.
+
+13. No sobrecargues el proyecto con librerías innecesarias.
+
+14. Si utilizas una librería de UI, debe integrarse con la identidad
+    visual y no hacer que el sitio parezca una plantilla genérica.
+
+15. Prioriza React, CSS y componentes claros.
+
+============================================================ 23.
+RESULTADO ESPERADO
+============================================================
+
+Quiero terminar con una V1 funcional que permita:
+
+1.  Entrar al inicio.
+2.  Explorar experiencias.
+3.  Filtrar experiencias.
+4.  Ver detalle de una experiencia.
+5.  Explorar hospedajes.
+6.  Filtrar hospedajes.
+7.  Ver detalle de un hospedaje.
+8.  Iniciar una reserva.
+9.  Completar el formulario.
+10. Ver el resumen.
+11. Confirmar la reserva.
+12. Ver una pantalla de confirmación.
+
+Todo utilizando mock data.
+
+============================================================ 24.
+IMPORTANTE SOBRE EL DISEÑO
+============================================================
+
+La inspiración principal es:
+
+NATURALEZA + TURISMO + HOSPEDAJE + EXPERIENCIA + ELEGANCIA
+
+No hacer:
+
+“Booking.com pero con otro nombre.”
+
+Hacer:
+
+“Una plataforma propia de experiencias y hospedajes de Apurímac.”
+
+La fotografía debe tener mucho protagonismo.
+
+El usuario debe sentir que está explorando un destino, no llenando
+formularios.
+
+============================================================ 25. PROCESO
+DE TRABAJO QUE DEBES SEGUIR
+============================================================
+
+Antes de programar:
+
+1.  Inspecciona el proyecto.
+2.  Identifica framework, estructura y dependencias existentes.
+3.  Determina qué se puede reutilizar.
+4.  Comprueba si ya existe algún diseño.
+5.  Planifica la estructura necesaria.
+
+Después:
+
+6.  Implementa la estructura visual.
+7.  Implementa navegación.
+8.  Implementa mock data.
+9.  Implementa filtros y búsquedas.
+10. Implementa detalle de experiencias.
+11. Implementa detalle de hospedajes.
+12. Implementa flujo de reserva.
+13. Implementa confirmación.
+14. Haz responsive.
+15. Revisa errores.
+16. Ejecuta el proyecto.
+17. Comprueba que las rutas funcionen.
+18. Comprueba que no existan errores de consola.
+19. Revisa visualmente todas las páginas.
+20. Corrige problemas de UI/UX.
+
+NO te detengas después de crear solamente la portada.
+
+Necesito una V1 completa y navegable.
+
+============================================================ 26.
+CRITERIO FINAL
+============================================================
+
+Al finalizar, el proyecto debe sentirse como una plataforma turística
+moderna enfocada en Apurímac.
+
+Debe ser:
+
+-   Bonita.
+-   Moderna.
+-   Elegante.
+-   Responsive.
+-   Funcional en frontend.
+-   Fácil de ampliar posteriormente.
+-   Coherente visualmente.
+-   Presentable para una evaluación universitaria.
+
+La prioridad de esta primera versión es:
+
+UI/UX + React + navegación + mock data + formularios + flujo de reserva.
+
+El backend, API, base de datos, autenticación real y pagos se
+implementarán en versiones posteriores.
+
+============================================================ 27. ENTREGA
+============================================================
+
+Al terminar el desarrollo:
+
+-   Ejecuta el proyecto.
+-   Comprueba que compile.
+-   Comprueba las rutas.
+-   Comprueba formularios.
+-   Comprueba filtros.
+-   Comprueba responsive.
+-   Corrige errores.
+-   Deja el proyecto listo para demostración.
+
+Finalmente, dame un resumen breve de: 1. Qué se implementó. 2. Qué
+páginas existen. 3. Qué funcionalidades funcionan. 4. Qué queda
+pendiente para V2/V3. 5. Cómo ejecutar el proyecto.
+
+NO reduzcas el alcance sin consultarme. Si encuentras un problema
+técnico, busca una solución compatible con el alcance de V1. Prioriza
+siempre una experiencia visual profesional y coherente con la identidad
+de turismo de Apurímac.

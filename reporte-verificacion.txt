@@ -1,0 +1,56 @@
+REPORTE DE VERIFICACIÓN DEL PROYECTO
+Carpeta: C:\Users\jesus\OneDrive\Escritorio\comercio
+Fecha:   15/10/2026, 6:55:05 p. m.
+Node:    v24.11.1
+
+0. Repositorio y autoría (Git)
+------------------------------
+  [X]  La carpeta no es un repositorio Git (no hay historial que revisar).
+  [OK] .gitignore incluye node_modules y .env.
+
+Estructura detectada
+--------------------
+       package.json en backend: @prisma/client, bcryptjs, cors, dotenv, express, helmet, jsonwebtoken, prisma
+       package.json en ecommerce-frontend: react, react-dom, react-router-dom, vite
+
+1. Versión 1 — Frontend en React
+--------------------------------
+  [OK] Proyecto React en ecommerce-frontend
+  [OK] 38 archivos de componentes (.jsx/.tsx).
+  [OK] useState usado 70 veces.
+  [OK] useEffect usado 19 veces.
+  [OK] React Router instalado; 18 rutas <Route> encontradas.
+  [OK] 8 formularios <form>.
+  [OK] Hay reglas responsive (@media o clases sm:/md:/lg:).
+       Compilando el frontend (npm run build)...
+  [OK] npm run build terminó sin errores.
+
+2. Versión 2 — Backend con API REST
+-----------------------------------
+  [OK] Backend en backend
+  [OK] Rutas: GET 13 · POST 6 · PUT/PATCH 7 · DELETE 4
+  [OK] CORS configurado (paquete cors o cabecera manual).
+  [OK] 1 archivos del frontend consumen la API (fetch/axios).
+  [OK] Backend organizado: 8 archivos de rutas/controladores.
+  [OK] El puerto se toma de process.env.PORT.
+
+3. Versión 3 — Base de datos, login y seguridad
+-----------------------------------------------
+  [OK] Base de datos: prisma, @prisma/client
+  [OK] Contraseñas con hash (bcrypt/bcryptjs/argon2).
+  [OK] Autenticación con token o sesión (jsonwebtoken/express-session/passport).
+  [OK] El backend menciona roles 7 veces.
+  [!]  Sin librería de validación: revisar que el backend valide los datos a mano.
+  [OK] No se detectaron consultas SQL armadas concatenando texto.
+
+4. Versión 4 — Despliegue y secretos
+------------------------------------
+  [OK] No se detectaron contraseñas ni claves escritas en el código.
+  [!]  El frontend tiene "localhost" fijo en: ecommerce-frontend/src/services/api.js. En producción debe usar una variable (import.meta.env / process.env).
+  [OK] README.md con 1320 palabras.
+  [!]  No hay archivos de configuración de despliegue (en Vercel/Netlify sin _redirects o vercel.json, F5 en una ruta da 404).
+
+Resumen
+-------
+  22 correctos · 3 para revisar · 1 problemas
+  Este reporte orienta la revisión; la nota se decide viendo el sistema funcionar y con la defensa del estudiante.

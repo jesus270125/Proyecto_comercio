@@ -1,0 +1,97 @@
+/* Accommodations page — reuses most filter styles from Experiences */
+.accommodations-hero { height: 360px; }
+
+.accommodations-hero__title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: var(--white);
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.accommodations-hero__sub {
+  color: rgba(255,255,255,0.7);
+  font-size: var(--text-base);
+}
+
+.accommodations-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-10);
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-16);
+  align-items: start;
+}
+
+.accommodations-filters {
+  position: sticky;
+  top: calc(var(--navbar-h) + var(--space-4));
+  max-height: calc(100vh - var(--navbar-h) - var(--space-8));
+  max-height: calc(100dvh - var(--navbar-h) - var(--space-8));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+.accommodations-filters::-webkit-scrollbar {
+  width: 5px;
+}
+
+.accommodations-filters::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.accommodations-filters::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 10px;
+}
+
+.accommodations-filters::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+.accommodations-filters__title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.accommodations-results-header { margin-bottom: var(--space-6); }
+.accommodations-results-count { font-size: var(--text-sm); color: var(--text-muted); }
+
+.accommodations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.accommodations-empty {
+  text-align: center;
+  padding: var(--space-20) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--text-muted);
+}
+
+.accommodations-empty h3 { font-size: var(--text-xl); color: var(--text-main); }
+.accommodations-empty p { font-size: var(--text-sm); }
+
+@media (max-width: 1024px) {
+  .accommodations-layout { grid-template-columns: 1fr; }
+  .accommodations-filters { position: static; }
+  .accommodations-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .accommodations-grid { grid-template-columns: 1fr; }
+}

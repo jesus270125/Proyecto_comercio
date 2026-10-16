@@ -1,0 +1,507 @@
+PROMPT MAESTRO PARA CLAUDE EN ANTIGRAVITY VERSIÓN 2 + VERSIÓN 3 —
+BACKEND, API REST Y BASE DE DATOS MYSQL PROYECTO: RESERVAS DE HOSPEDAJES
+/ TURISMO VIVENCIAL EN APURÍMAC RESPONSABLE: JESÚS ALEJANDRO MORÓN LUNA
+
+============================================================ 1. OBJETIVO
+Y DOCUMENTO ACADÉMICO DE REFERENCIA
+============================================================
+
+Estoy desarrollando el proyecto universitario asignado:
+
+“Reservas de hospedajes/turismo vivencial en Apurímac”.
+
+Responsable: MORON LUNA, JESUS ALEJANDRO.
+
+El catálogo del curso “Desarrollo de Aplicaciones Web con React y
+Node.js” establece estas versiones:
+
+VERSIÓN 2 — Con Backend (Node.js + API REST): - Crear una API propia en
+Node.js con Express que sirva los datos que antes estaban definidos
+directamente en el frontend. - El frontend consume la API mediante fetch
+o axios. - En esta etapa los datos todavía podrían vivir en memoria o en
+un archivo JSON, sin base de datos. - Se evalúan endpoints REST,
+comunicación cliente-servidor y manejo correcto de CORS.
+
+VERSIÓN 3 — Con Base de Datos: - Integrar una base de datos real
+conectada al backend. - El catálogo permite MongoDB, PostgreSQL o
+MySQL. - Implementar CRUD completo y persistente. - Incorporar
+autenticación básica de usuarios (login y roles). - Cuidar el modelado
+de datos, consultas, hash de contraseñas y validación.
+
+MI ELECCIÓN EXPLÍCITA PARA ESTE PROYECTO ES MYSQL.
+
+Debes utilizar MySQL como base de datos. No cambies a MongoDB ni
+PostgreSQL.
+
+La aplicación frontend de la V1 está casi terminada y ya incluye un
+apartado de administración. Tu trabajo consiste en evolucionar el
+proyecto existente, no crear una aplicación nueva desde cero.
+
+El alcance de este encargo es implementar V2 y V3 conjuntamente,
+manteniendo la separación conceptual y documentando qué requisitos
+corresponden a cada versión.
+
+============================================================ 2. REGLA
+PRINCIPAL: INSPECCIONAR ANTES DE CAMBIAR
+============================================================
+
+Antes de modificar archivos:
+
+1.  Inspecciona el repositorio y toda la estructura relevante.
+2.  Lee package.json, dependencias, configuración y README si existe.
+3.  Identifica si el frontend usa JavaScript o TypeScript y conserva el
+    lenguaje actual.
+4.  Identifica la versión y configuración de React, el enrutamiento y
+    los estilos.
+5.  Revisa todas las páginas y componentes, especialmente el panel de
+    administración.
+6.  Identifica las estructuras de mock data y los campos que usan los
+    formularios.
+7.  Identifica todos los recursos que el administrador puede gestionar.
+8.  Comprueba si ya hay backend, API, conexión a MySQL o archivos de
+    configuración.
+9.  Conserva el diseño, las páginas, los flujos y las funcionalidades
+    que ya funcionan.
+10. Presenta internamente un plan breve y después ejecuta la
+    implementación.
+
+No reescribas el frontend sin necesidad. No elimines funcionalidades
+existentes. No migres de JavaScript a TypeScript ni al revés solo por
+preferencia personal. Respeta las dependencias y convenciones del
+repositorio cuando sean adecuadas.
+
+No te limites a producir recomendaciones: implementa los cambios en los
+archivos del proyecto y verifica el resultado.
+
+============================================================ 3.
+TECNOLOGÍAS OBLIGATORIAS Y DECISIONES
+============================================================
+
+Utiliza:
+
+-   Frontend: el React existente.
+-   Lenguaje frontend: conservar JavaScript o TypeScript según el
+    proyecto existente.
+-   Backend: Node.js.
+-   Framework backend: Express.
+-   API: REST en JSON.
+-   Base de datos: MySQL.
+-   Comunicación frontend/backend: conservar fetch o axios si ya se usa;
+    si no, escoger una opción y centralizar las peticiones.
+-   CORS configurado para el origen del frontend.
+-   Variables de entorno para credenciales y configuración.
+-   Un driver u ORM compatible con MySQL.
+
+Para acceso a datos, inspecciona primero las dependencias. Si no existe
+una elección previa, puedes usar Prisma con el proveedor MySQL o mysql2
+con consultas parametrizadas. Escoge UNA estrategia coherente; no
+mezcles herramientas de acceso a datos innecesariamente.
+
+Si utilizas Prisma, configura explícitamente MySQL como proveedor y
+genera las migraciones correspondientes. Si utilizas mysql2, crea
+scripts SQL versionados y documenta cómo ejecutarlos.
+
+No cambies la base de datos a otra tecnología.
+
+============================================================ 4. ¿DEBES
+CREAR TÚ LA BASE DE DATOS?
+============================================================
+
+Sí: debes preparar e implementar todo lo que se pueda desde el
+repositorio para que la base de datos MySQL quede lista para utilizarse.
+
+Esto incluye: - diseñar el modelo relacional; - crear las tablas y
+relaciones necesarias; - definir claves primarias y foráneas; - definir
+índices y restricciones; - crear migraciones o scripts SQL; - crear un
+seed reproducible con datos de demostración; - implementar la conexión
+del backend a MySQL; - crear .env.example; - documentar comandos de
+instalación y ejecución; - comprobar la conexión cuando exista una
+instancia MySQL disponible.
+
+Si tienes acceso real a una instancia MySQL configurada, crea/aplica las
+migraciones y verifica las tablas. Si no tienes acceso al servidor, no
+finjas que la base de datos quedó creada o conectada: deja el esquema,
+las migraciones y el seed listos, y explícame exactamente qué debo hacer
+yo en MySQL para crear la base y proporcionar las credenciales.
+
+No inventes ni adivines contraseñas, host, usuario o credenciales. No
+sobrescribas una base existente ni ejecutes operaciones destructivas sin
+verificar el entorno y el contenido.
+
+Usa un nombre claro para la base, por ejemplo apurimac_turismo, salvo
+que el proyecto ya tenga un nombre establecido.
+
+============================================================ 5.
+ARQUITECTURA DEL BACKEND
+============================================================
+
+Adapta la estructura a la organización existente. Una propuesta posible:
+
+backend/ src/ config/ controllers/ middleware/ routes/ services/
+validators/ utils/ app.js server.js prisma/ o database/ tests/
+.env.example package.json
+
+Si el repositorio ya tiene una estructura apropiada, respétala.
+
+Mantén separadas estas responsabilidades: - Routes: definición de
+endpoints. - Controllers: recepción de peticiones y respuestas HTTP. -
+Services: reglas de negocio. - Acceso a datos: Prisma o repositorios con
+mysql2. - Middleware: autenticación, autorización, errores y
+seguridad. - Validators: validación de entrada.
+
+No pongas toda la lógica en un solo archivo.
+
+============================================================ 6. MODELO
+RELACIONAL MYSQL
+============================================================
+
+Define el esquema real a partir de las pantallas y formularios
+existentes. No crees tablas por suposición si la interfaz no utiliza esa
+funcionalidad.
+
+Como mínimo, considera las entidades siguientes cuando correspondan:
+
+A. users - id. - nombre. - apellido, si se utiliza. - email único. -
+password_hash. - role, por ejemplo ADMIN o USER. - estado
+activo/inactivo si hace falta. - created_at y updated_at.
+
+B. destinations - id. - nombre. - slug único. - ubicación. -
+descripción. - imagen principal. - categoría si aplica. - estado
+publicado/borrador. - timestamps.
+
+C. experiences - id. - nombre. - slug único. - destino relacionado
+mediante clave foránea cuando corresponda. - descripción corta y
+completa. - categoría. - duración. - dificultad, si aplica. - precio
+referencial. - qué incluye y qué no incluye. - imágenes. - estado
+publicado/borrador. - timestamps.
+
+D. accommodations - id. - nombre. - slug único. - destino/ubicación. -
+descripción. - tipo de alojamiento. - precio por noche. - capacidad. -
+servicios. - imágenes. - estado publicado/borrador. - timestamps.
+
+E. reservations - id. - código único de reserva. - usuario asociado si
+hay cuenta. - datos de contacto necesarios para reservas como invitado,
+si esa es la lógica actual. - experiencia y/o alojamiento
+seleccionados. - fecha de llegada y salida o fecha de experiencia según
+corresponda. - número de personas. - precio unitario y total calculado
+por el backend. - estado de reserva. - estado de pago, sin afirmar que
+hubo un pago real. - observaciones. - timestamps.
+
+F. Otras entidades: Solo agregar testimonios, categorías, galerías,
+habitaciones u otras tablas si el frontend existente o las reglas de
+negocio las necesitan.
+
+REQUISITOS DEL ESQUEMA: - Usa tipos adecuados de MySQL. - Define claves
+primarias y foráneas. - Define restricciones UNIQUE donde
+correspondan. - Define índices para búsquedas frecuentes. - Usa DECIMAL
+para importes monetarios; no uses FLOAT para precios. - Define reglas de
+borrado/actualización coherentes. - Evita duplicar datos
+innecesariamente. - Documenta las relaciones. - Usa migraciones
+versionadas. - Respeta el motor y versión de MySQL disponible en el
+entorno.
+
+Si una reserva puede incluir tanto una experiencia como un hospedaje,
+diseña esa relación de manera consistente y calcula el importe sin
+duplicidades.
+
+============================================================ 7. API REST
+============================================================
+
+Implementa endpoints adecuados a las pantallas reales, usando /api/v1 si
+no contradice el proyecto.
+
+Ejemplos de recursos públicos: - GET /api/v1/destinations - GET
+/api/v1/destinations/:idOrSlug - GET /api/v1/experiences - GET
+/api/v1/experiences/:idOrSlug - GET /api/v1/accommodations - GET
+/api/v1/accommodations/:idOrSlug - POST /api/v1/reservations
+
+Autenticación, si corresponde a la interfaz: - POST
+/api/v1/auth/register - POST /api/v1/auth/login - POST
+/api/v1/auth/logout - GET /api/v1/auth/me
+
+Reservas del usuario, si hay cuentas: - GET /api/v1/my/reservations -
+GET /api/v1/my/reservations/:id - PATCH
+/api/v1/my/reservations/:id/cancel
+
+Administración: - CRUD /api/v1/admin/destinations - CRUD
+/api/v1/admin/experiences - CRUD /api/v1/admin/accommodations - CRUD
+/api/v1/admin/reservations - CRUD de otras entidades administrables que
+ya existan. - Gestión de usuarios solo si corresponde y con permisos
+estrictos.
+
+Estos endpoints son una guía: adáptalos a los recursos reales.
+Implementa los métodos GET, POST, PUT/PATCH y DELETE que correspondan.
+
+Incluye: - códigos HTTP correctos; - validación de parámetros y body; -
+respuestas JSON coherentes; - manejo centralizado de errores; -
+paginación/filtros si son necesarios; - consultas parametrizadas o
+ORM; - mensajes sin datos sensibles; - nunca devolver password_hash.
+
+============================================================ 8. CONECTAR
+EL FRONTEND CON LA API
+============================================================
+
+No basta con crear un backend aislado: el React existente debe
+consumirlo realmente.
+
+1.  Identifica los mock data existentes.
+2.  Crea una capa de servicios API centralizada.
+3.  Conecta listas y detalles de destinos, experiencias y hospedajes.
+4.  Conecta el panel de administración.
+5.  Conecta los formularios de creación y edición.
+6.  Conecta eliminación, publicación y cambios de estado.
+7.  Conecta el flujo de reserva.
+8.  Implementa estados de carga, vacío, error y éxito.
+9.  Conserva filtros, búsquedas y diseño actual.
+10. Refresca los datos después de crear, editar o eliminar.
+11. No uses los arrays mock como fuente principal una vez conectada la
+    API.
+12. No ocultes fallos de conexión recurriendo silenciosamente a mock
+    data.
+13. Muestra un mensaje claro cuando el backend o la base de datos no
+    estén disponibles.
+
+============================================================ 9. PANEL
+ADMINISTRATIVO
+============================================================
+
+El panel de administración ya existe o está parcialmente desarrollado.
+Debes inspeccionarlo y conectar sus funcionalidades reales a MySQL a
+través de la API.
+
+Para cada módulo que exista, conecta las operaciones correspondientes: -
+listar; - ver detalle; - crear; - editar; - eliminar con confirmación; -
+publicar/despublicar; - cambiar estados permitidos.
+
+El contenido guardado en administración debe aparecer en la parte
+pública según su estado de publicación.
+
+No basta con modificar useState: los cambios deben guardarse en MySQL y
+seguir existiendo después de recargar la página o reiniciar el servidor.
+
+Protege las rutas admin tanto en el frontend como en el backend. La
+protección del frontend mejora la experiencia, pero la autorización real
+debe verificarse en el servidor en cada endpoint.
+
+============================================================ 10.
+AUTENTICACIÓN, ROLES Y CONTRASEÑAS
+============================================================
+
+Implementa autenticación básica segura, según el flujo que tenga el
+proyecto.
+
+Requisitos: - inicio de sesión; - cierre de sesión; - consulta del
+usuario actual; - registro solo si existe en el alcance; - roles como
+ADMIN y USER cuando correspondan; - hash de contraseñas mediante bcrypt
+o bcryptjs; - middleware de autenticación; - middleware de
+autorización; - endpoints administrativos protegidos; - validación de
+datos; - respuestas genéricas para credenciales incorrectas.
+
+Usa una estrategia coherente de sesión o JWT. Preferir cookies HttpOnly
+y seguras en producción cuando la arquitectura lo permita. Si usas JWT
+en cookies, considera las medidas necesarias para CSRF y CORS. No
+guardes contraseñas en texto plano ni expongas tokens o secretos.
+
+No codifiques una contraseña de administrador fija en el repositorio.
+Prepara un seed o procedimiento seguro para crear el primer admin
+leyendo credenciales desde variables de entorno. No imprimas la
+contraseña en logs.
+
+============================================================ 11. REGLAS
+DE NEGOCIO DE LAS RESERVAS
+============================================================
+
+-   Verificar que el recurso exista y esté publicado.
+-   Validar datos requeridos.
+-   Validar fechas y número de personas.
+-   La fecha de salida debe ser posterior a la llegada cuando aplique.
+-   Respetar la capacidad del hospedaje.
+-   Calcular precios y totales en el servidor.
+-   No confiar en los importes enviados por React.
+-   Generar un código de reserva único.
+-   Definir estados permitidos y transiciones válidas.
+-   Prevenir doble envío accidental cuando sea posible.
+-   No afirmar disponibilidad garantizada si no existe un sistema fiable
+    de calendario/inventario.
+-   No implementar pagos reales en este encargo.
+
+Usa transacciones de base de datos cuando una operación implique varias
+escrituras que deban ser atómicas.
+
+============================================================ 12.
+SEGURIDAD Y CONFIGURACIÓN
+============================================================
+
+Implementa según corresponda: - validación del lado del servidor; -
+consultas parametrizadas/ORM; - CORS restringido al origen configurado
+del frontend; - Helmet; - rate limiting en login y endpoints
+sensibles; - límites de tamaño de solicitudes; - manejo centralizado de
+errores; - protección de endpoints por rol; - variables de entorno; -
+.gitignore adecuado; - logs sin contraseñas ni tokens; - protección de
+datos personales; - prevención de asignación masiva de campos.
+
+Crea .env.example con variables como: NODE_ENV=development PORT=4000
+FRONTEND_URL=http://localhost:5173
+DATABASE_URL=mysql://USER:PASSWORD@localhost:3306/apurimac_turismo
+
+Adapta los nombres a la implementación elegida. Este valor es un
+ejemplo, no una credencial real. No pongas secretos reales en el
+archivo.
+
+Verifica que .env esté excluido de Git.
+
+============================================================ 13.
+MIGRACIONES, CREACIÓN DE LA BASE Y SEED
+============================================================
+
+Debes crear los archivos necesarios para configurar MySQL desde cero.
+
+Si usas Prisma: - configurar provider = “mysql”; - crear
+schema.prisma; - generar migraciones; - preparar seed reproducible; -
+documentar los comandos.
+
+Si usas mysql2: - crear scripts SQL versionados para tablas, relaciones
+e índices; - preparar un seed idempotente; - documentar cómo ejecutar
+los scripts.
+
+El seed debe incluir contenido de demostración relacionado con Apurímac:
+destinos, experiencias y hospedajes que realmente encajen en el
+proyecto. No presentar precios, ratings, reseñas ni disponibilidad
+ficticios como información verificada.
+
+La creación del esquema y del seed debe poder repetirse en un entorno de
+desarrollo sin duplicar indiscriminadamente los datos.
+
+No elimines ni reinicialices una base de datos existente sin
+autorización expresa y verificación.
+
+Si no puedes conectarte al servicio MySQL del entorno: - no digas que
+las tablas ya fueron creadas; - deja scripts/migraciones listos; -
+indica qué debe instalarse o iniciarse; - indica cómo crear la base; -
+indica dónde configurar usuario y contraseña; - proporciona los comandos
+exactos para aplicar migraciones y seed.
+
+============================================================ 14. PRUEBAS
+============================================================
+
+Añade y ejecuta pruebas apropiadas.
+
+Verifica como mínimo: - el backend inicia; - la API devuelve datos de
+MySQL; - listar y obtener detalles; - CRUD autorizado; - validación de
+datos; - errores 400 y 404; - login correcto e incorrecto; - contraseñas
+con hash; - usuario sin sesión no accede a admin; - USER no puede
+ejecutar operaciones ADMIN; - ADMIN sí puede ejecutar operaciones
+autorizadas; - creación de reservas; - fechas y cantidades inválidas; -
+precio calculado en backend; - código de reserva único; - cambios de
+admin persisten después de refrescar; - frontend consume la API; -
+manejo de backend desconectado.
+
+No afirmes que una prueba pasó si no se ejecutó. Documenta las pruebas
+bloqueadas por falta de MySQL o credenciales.
+
+============================================================ 15.
+DOCUMENTACIÓN Y COMANDOS
+============================================================
+
+Actualiza README.md con: - descripción del proyecto; - tecnologías; -
+requisitos previos; - instalación; - configuración de MySQL; - creación
+de la base de datos; - variables de entorno; - migraciones; - seed; -
+creación del administrador; - inicio del backend; - inicio del
+frontend; - pruebas; - endpoints; - limitaciones; - pasos para la
+siguiente versión.
+
+Proporciona comandos exactos para el sistema y las herramientas que
+detectes en el proyecto. No supongas que MySQL está instalado o activo
+sin comprobarlo.
+
+============================================================ 16.
+SEPARACIÓN DE V2 Y V3
+============================================================
+
+Aunque se implementen conjuntamente, documenta por separado:
+
+V2: - Node.js + Express; - API REST; - frontend consumiendo la API; -
+endpoints; - CORS; - comunicación cliente-servidor.
+
+V3: - MySQL; - modelo relacional; - migraciones; - CRUD persistente; -
+autenticación y roles; - hash de contraseñas; - validación y seguridad
+básica.
+
+No confundas requisitos de V4 con este encargo. No es necesario
+desplegar la aplicación ni comprar un dominio ahora. No integres pagos
+reales.
+
+============================================================ 17. ORDEN
+DE TRABAJO ============================================================
+
+FASE 1: Auditar el proyecto actual. FASE 2: Elegir la estrategia de
+acceso a MySQL respetando las dependencias existentes. FASE 3: Crear el
+esquema relacional, migraciones y seed. FASE 4: Implementar backend
+Express y API REST. FASE 5: Implementar autenticación, roles y
+seguridad. FASE 6: Implementar reglas de negocio y reservas. FASE 7:
+Conectar el frontend y el panel admin. FASE 8: Ejecutar pruebas y
+corregir errores. FASE 9: Documentar configuración y comandos.
+
+No te limites a escribir un plan. Ejecuta las fases que sean posibles en
+el entorno.
+
+Si necesitas credenciales o un servidor MySQL que no está disponible,
+continúa con todo lo que puedas implementar de forma segura y especifica
+qué intervención mía es necesaria. No inventes credenciales ni afirmes
+haber probado conexiones que no existen.
+
+============================================================ 18.
+CRITERIOS DE ACEPTACIÓN
+============================================================
+
+La implementación solo puede declararse terminada si se ha comprobado
+que:
+
+1.  El frontend existente sigue funcionando.
+2.  El backend inicia.
+3.  Express expone la API REST.
+4.  El backend usa MySQL, no otra base.
+5.  El esquema y las migraciones están disponibles.
+6.  El seed funciona.
+7.  La API lee y escribe datos persistentes.
+8.  El frontend consume la API.
+9.  El panel admin realiza operaciones reales sobre MySQL.
+10. Los cambios se mantienen después de refrescar.
+11. Los endpoints admin están protegidos en el servidor.
+12. Las contraseñas se guardan con hash.
+13. Los roles se aplican correctamente.
+14. Las reservas se guardan en MySQL.
+15. El backend valida los precios y datos.
+16. CORS está configurado correctamente.
+17. Las pruebas realizadas están documentadas.
+18. README permite configurar el proyecto.
+19. No se exponen credenciales.
+20. Las limitaciones no resueltas están declaradas honestamente.
+
+============================================================ 19. ENTREGA
+FINAL ============================================================
+
+Al finalizar, entrega un resumen con:
+
+1.  Tecnologías y librerías usadas.
+2.  Estructura de tablas y relaciones MySQL.
+3.  Endpoints implementados.
+4.  Módulos admin conectados.
+5.  Autenticación y roles.
+6.  Flujo de reservas.
+7.  Archivos creados o modificados.
+8.  Comandos exactos para iniciar frontend/backend.
+9.  Pasos para crear/iniciar MySQL y configurar credenciales.
+10. Comandos de migración y seed.
+11. Pruebas ejecutadas y resultados reales.
+12. Problemas pendientes y sus causas.
+13. Qué corresponde a V2, qué a V3 y qué queda para V4.
+
+OBJETIVO FINAL: Convertir la V1 existente en una aplicación con React,
+Node.js, Express, API REST y MySQL persistente, manteniendo el diseño y
+conectando realmente el panel de administración y las reservas.
+
+Inspecciona primero el repositorio. Implementa sobre lo que ya existe.
+Usa MySQL obligatoriamente. Crea las migraciones/scripts necesarios. No
+destruyas la V1. Ejecuta las pruebas posibles y documenta con honestidad
+el estado final.

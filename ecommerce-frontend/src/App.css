@@ -1,0 +1,12 @@
+/* App.css — layout principal y reset de Vite */
+* { box-sizing: border-box; }
+
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}

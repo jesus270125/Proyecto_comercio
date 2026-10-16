@@ -1,0 +1,212 @@
+/* Navbar styles */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--navbar-h);
+  transition: background var(--transition), box-shadow var(--transition);
+  background: transparent;
+}
+
+.navbar--scrolled {
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 20px rgba(0,0,0,0.08);
+}
+
+/* make logo/links visible on transparent vs scrolled */
+.navbar:not(.navbar--scrolled) .navbar__link,
+.navbar:not(.navbar--scrolled) .navbar__logo {
+  color: var(--white);
+}
+
+.navbar:not(.navbar--scrolled) .navbar__link:hover {
+  color: rgba(255,255,255,0.75);
+}
+
+.navbar--scrolled .navbar__link { color: var(--text-main); }
+.navbar--scrolled .navbar__logo { color: var(--green-800); }
+
+.navbar__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+/* Logo */
+.navbar__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: var(--white);
+  transition: color var(--transition);
+}
+
+.navbar__logo-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.navbar__logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.navbar__logo-main {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.navbar__logo-sub {
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
+/* Nav links */
+.navbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.navbar__link {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  color: var(--text-main);
+}
+
+.navbar__link:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.navbar__link.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.navbar:not(.navbar--scrolled) .navbar__link.active {
+  background: rgba(255,255,255,0.18);
+  color: var(--white);
+}
+
+/* Actions */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Burger */
+.navbar__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.navbar__burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--white);
+  border-radius: 2px;
+  transition: all var(--transition-fast);
+  transform-origin: center;
+}
+
+.navbar--scrolled .navbar__burger span {
+  background: var(--text-main);
+}
+
+.navbar__burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.navbar__burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.navbar__burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile menu */
+.navbar__mobile {
+  display: none;
+  position: fixed;
+  top: var(--navbar-h);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  transform: translateY(-8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--transition);
+  z-index: 999;
+}
+
+.navbar__mobile.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+.navbar__mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.navbar__mobile-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--text-main);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.navbar__mobile-link:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .navbar__nav { display: none; }
+  .navbar__actions { display: none; }
+  .navbar__burger { display: flex; }
+  .navbar__mobile { display: block; }
+}
+
+/* Fix ghost btn on scrolled (white) navbar */
+.navbar--scrolled .btn-ghost {
+  background: rgba(61,107,31,0.08);
+  color: var(--green-800);
+  border-color: var(--green-300);
+}
+.navbar--scrolled .btn-ghost:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}

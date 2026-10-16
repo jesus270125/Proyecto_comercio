@@ -1,0 +1,198 @@
+// Prisma Schema — Apurímac Turismo V2/V3
+// Proveedor: MySQL 8.0
+// Generado para: MORÓN LUNA, JESÚS ALEJANDRO
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USUARIOS ────────────────────────────────────────────
+model User {
+  id           Int           @id @default(autoincrement())
+  nombre       String        @db.VarChar(100)
+  apellido     String?       @db.VarChar(100)
+  email        String        @unique @db.VarChar(255)
+  passwordHash String        @map("password_hash") @db.VarChar(255)
+  role         Role          @default(USER)
+  activo       Boolean       @default(true)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  reservations Reservation[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+// ─── DESTINOS ────────────────────────────────────────────
+model Destination {
+  id          Int           @id @default(autoincrement())
+  nombre      String        @db.VarChar(150)
+  slug        String        @unique @db.VarChar(150)
+  province    String?       @db.VarChar(100)
+  description String        @db.Text
+  image       String        @db.VarChar(500)
+  altitude    String?       @db.VarChar(50)
+  climate     String?       @db.VarChar(80)
+  highlights  Json?         // Array de strings
+  publicado   Boolean       @default(true)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  experiences    Experience[]
+  accommodations Accommodation[]
+
+  @@index([slug])
+  @@index([publicado])
+  @@map("destinations")
+}
+
+// ─── EXPERIENCIAS ─────────────────────────────────────────
+model Experience {
+  id               Int           @id @default(autoincrement())
+  nombre           String        @db.VarChar(200)
+  slug             String        @unique @db.VarChar(200)
+  shortDescription String        @map("short_description") @db.VarChar(500)
+  description      String        @db.Text
+  category         String        @db.VarChar(80)
+  location         String        @db.VarChar(150)
+  district         String?       @db.VarChar(150)
+  duration         String        @db.VarChar(80)
+  difficulty       String?       @db.VarChar(50)
+  groupSize        String?       @map("group_size") @db.VarChar(80)
+  price            Decimal       @db.Decimal(10, 2)
+  rating           Decimal?      @default(0) @db.Decimal(3, 1)
+  reviewsCount     Int           @default(0) @map("reviews_count")
+  image            String        @db.VarChar(500)
+  gallery          Json?         // Array de URLs
+  includes         Json?         // Array de strings
+  excludes         Json?         // Array de strings
+  itinerary        Json?         // Array de {day, title, description}
+  tags             Json?         // Array de strings
+  featured         Boolean       @default(false)
+  publicado        Boolean       @default(true)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  destinationId    Int?          @map("destination_id")
+  destination      Destination?  @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+
+  reservations     Reservation[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([publicado])
+  @@index([featured])
+  @@map("experiences")
+}
+
+// ─── HOSPEDAJES ───────────────────────────────────────────
+model Accommodation {
+  id          Int           @id @default(autoincrement())
+  nombre      String        @db.VarChar(200)
+  slug        String        @unique @db.VarChar(200)
+  type        String        @db.VarChar(80)
+  location    String        @db.VarChar(150)
+  district    String?       @db.VarChar(150)
+  address     String?       @db.VarChar(300)
+  description String        @db.Text
+  price       Decimal       @db.Decimal(10, 2)
+  rating      Decimal?      @default(0) @db.Decimal(3, 1)
+  reviewsCount Int          @default(0) @map("reviews_count")
+  capacity    Int?
+  rooms       Int?
+  image       String        @db.VarChar(500)
+  gallery     Json?
+  amenities   Json?
+  featured    Boolean       @default(false)
+  publicado   Boolean       @default(true)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  destinationId Int?        @map("destination_id")
+  destination   Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+
+  reservations  Reservation[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([publicado])
+  @@index([featured])
+  @@map("accommodations")
+}
+
+// ─── RESERVAS ─────────────────────────────────────────────
+model Reservation {
+  id              Int                @id @default(autoincrement())
+  codigo          String             @unique @db.VarChar(20)
+
+  // Datos del cliente (puede ser invitado sin cuenta)
+  guestNombre     String             @map("guest_nombre") @db.VarChar(100)
+  guestApellido   String             @map("guest_apellido") @db.VarChar(100)
+  guestEmail      String             @map("guest_email") @db.VarChar(255)
+  guestTelefono   String             @map("guest_telefono") @db.VarChar(30)
+  observaciones   String?            @db.Text
+
+  // Servicio reservado (experiencia O hospedaje, no ambos a la vez)
+  tipo            ReservationType
+  experienceId    Int?               @map("experience_id")
+  accommodationId Int?               @map("accommodation_id")
+
+  // Fechas y personas
+  fechaLlegada    DateTime           @map("fecha_llegada") @db.Date
+  fechaSalida     DateTime           @map("fecha_salida") @db.Date
+  personas        Int                @default(1)
+  noches          Int?               // Calculado en backend
+
+  // Importes — calculados en servidor, no en cliente
+  precioUnitario  Decimal            @map("precio_unitario") @db.Decimal(10, 2)
+  subtotal        Decimal            @db.Decimal(10, 2)
+  serviceFee      Decimal            @map("service_fee") @db.Decimal(10, 2)
+  total           Decimal            @db.Decimal(10, 2)
+
+  // Estados
+  estado          ReservationStatus  @default(PENDIENTE)
+  estadoPago      PaymentStatus      @default(SIN_PAGO) @map("estado_pago")
+
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  // Usuario autenticado (opcional — invitados no tienen cuenta)
+  userId          Int?               @map("user_id")
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  experience      Experience?        @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  accommodation   Accommodation?     @relation(fields: [accommodationId], references: [id], onDelete: SetNull)
+
+  @@index([codigo])
+  @@index([estado])
+  @@index([guestEmail])
+  @@index([createdAt])
+  @@map("reservations")
+}
+
+enum ReservationType {
+  EXPERIENCIA
+  HOSPEDAJE
+}
+
+enum ReservationStatus {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  COMPLETADA
+}
+
+enum PaymentStatus {
+  SIN_PAGO
+  SIMULADO
+}
