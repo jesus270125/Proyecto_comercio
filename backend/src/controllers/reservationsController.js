@@ -175,9 +175,9 @@ async function adminDetail(req, res, next) {
 async function adminUpdateEstado(req, res, next) {
   try {
     const id = parseInt(req.params.id);
-    const { estado } = req.body;
+    const { estado } = req.body || {};
     const VALID = ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'];
-    if (!VALID.includes(estado?.toUpperCase()))
+    if (typeof estado !== 'string' || !VALID.includes(estado.toUpperCase()))
       return res.status(400).json({ error: `Estado inválido. Opciones: ${VALID.join(', ')}` });
 
     const r = await prisma.reservation.update({

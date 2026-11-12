@@ -6,6 +6,7 @@
  * USO (en la carpeta principal del proyecto del estudiante, con Node 18 o superior):
  *   node verificar.js
  *   node verificar.js --api http://localhost:3000/api/productos
+ *   node verificar.js --api http://localhost:4000/api/v1/experiences --origin http://localhost:5173
  *   node verificar.js --api https://api.midominio.com/api/productos --web https://midominio.com
  *   node verificar.js --build          (además compila el frontend con npm run build)
  *
@@ -19,6 +20,7 @@ const args = process.argv.slice(2);
 const arg = (n) => { const i = args.indexOf(`--${n}`); return i > -1 ? args[i + 1] : null; };
 const API = arg('api');
 const WEB = arg('web');
+const ORIGIN = arg('origin') || 'http://ejemplo-de-origen.com';
 const BUILD = args.includes('--build');
 const RAIZ = process.cwd();
 const IGNORAR = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.vercel', '.netlify']);
@@ -198,12 +200,15 @@ async function probar() {
     titulo(`Prueba de la API: ${API}`);
     try {
       const t0 = Date.now();
-      const r = await fetch(API, { headers: { Origin: 'http://ejemplo-de-origen.com' } });
+      const r = await fetch(API, { headers: { Origin: ORIGIN } });
       const ms = Date.now() - t0;
       const tipo = r.headers.get('content-type') || '';
       (r.ok ? ok : mal)(`Responde ${r.status} en ${ms} ms.`);
       /json/.test(tipo) ? ok('Devuelve JSON.') : mal(`No devuelve JSON (content-type: ${tipo || 'ninguno'}).`);
-      r.headers.get('access-control-allow-origin') ? ok(`CORS activo: Access-Control-Allow-Origin = ${r.headers.get('access-control-allow-origin')}`) : ojo('La respuesta no trae Access-Control-Allow-Origin para otros orígenes (puede estar limitado a su dominio: correcto en producción).');
+      const corsOrigin = r.headers.get('access-control-allow-origin');
+      (corsOrigin === ORIGIN || corsOrigin === '*')
+        ? ok(`CORS permite el origen probado: ${ORIGIN}.`)
+        : ojo(`CORS no permite el origen probado (${ORIGIN}). Use --origin con la URL del frontend si el acceso está restringido.`);
       const vacio = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => null);
       if (vacio) ([400, 401, 403, 404, 405, 422].includes(vacio.status) ? ok : mal)(`POST con datos vacíos responde ${vacio.status}${[200, 201].includes(vacio.status) ? ' (aceptó datos vacíos: falta validación)' : ''}.`);
     } catch (e) { mal(`No responde: ${e.cause?.code || e.message}. ¿Está encendido el backend?`); }

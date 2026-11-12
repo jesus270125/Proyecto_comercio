@@ -72,12 +72,13 @@ O ejecuta el script de creación:
 ## Migraciones y esquema (Prisma)
 
 ```bash
-# Generar el cliente Prisma y aplicar migraciones
-npm run migrate
-
-# O en desarrollo (aplica cambios sin historial formal):
+# Generar el cliente y crear el esquema en MySQL
+npm run generate
 npm run db:push
 ```
+
+Este repositorio todavía no incluye migraciones versionadas; `npm run migrate`
+solo las aplica cuando existen. Para preparar esta entrega usa `db:push`.
 
 ---
 
@@ -160,6 +161,23 @@ El servidor corre en `http://localhost:4000`
 ---
 
 ## Pruebas con Postman
+
+Para ejecutar las pruebas automáticas del backend:
+
+```bash
+cd backend
+npm test
+```
+
+Con el backend en marcha, ejecuta desde la carpeta principal del proyecto:
+
+```bash
+node verificar.js --build --api http://localhost:4000/api/v1/experiences --origin http://localhost:5173
+```
+
+`--origin` debe coincidir con `FRONTEND_URL`: CORS permite el frontend configurado,
+no todos los orígenes. El verificador también comprueba el historial de Git; su
+conteo de commits es orientativo y no afecta el funcionamiento de la API.
 
 Importa la colección o prueba manualmente:
 
