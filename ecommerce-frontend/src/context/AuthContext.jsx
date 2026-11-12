@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/api';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './authStore';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -13,13 +12,12 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('apu_token')));
 
   // Al montar, verificar si el token sigue siendo válido con /auth/me
   useEffect(() => {
     const token = localStorage.getItem('apu_token');
     if (!token) {
-      setLoading(false);
       return;
     }
 
@@ -67,10 +65,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth debe usarse dentro de <AuthProvider>');
-  return ctx;
 }

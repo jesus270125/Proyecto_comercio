@@ -93,6 +93,9 @@ async function create(req, res, next) {
       data: {
         id: reservation.id,
         codigo: reservation.codigo,
+        precioUnitario: reservation.precioUnitario,
+        subtotal: reservation.subtotal,
+        serviceFee: reservation.serviceFee,
         total: reservation.total,
         estado: reservation.estado,
       },

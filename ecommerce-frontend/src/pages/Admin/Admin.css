@@ -603,6 +603,31 @@
 }
 
 /* Preview de imagen */
+.admin-image-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed #b6caa7;
+  border-radius: 0.7rem;
+  background: #f8faf5;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.admin-image-picker:hover { border-color: var(--primary); background: #f0f6ea; }
+.admin-image-picker:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.admin-image-picker--disabled { opacity: 0.55; cursor: wait; }
+.admin-image-picker__input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.admin-image-picker__icon { display: grid; place-items: center; flex-shrink: 0; width: 2.35rem; height: 2.35rem; border-radius: 0.55rem; color: var(--primary); background: #e8f1df; }
+.admin-image-picker__copy { display: flex; flex-direction: column; gap: 0.15rem; }
+.admin-image-picker__copy strong { color: var(--green-900); font-size: 0.8rem; font-weight: 650; }
+.admin-image-picker__copy small { color: var(--text-muted); font-size: 0.7rem; }
+.admin-images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 0.75rem; }
+.admin-images-item { display: flex; flex-direction: column; gap: 0.35rem; }
+.admin-images-item img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 0.5rem; }
+.admin-images-item button { cursor: pointer; padding: 0.3rem; }
+.admin-images-error { color: #b91c1c; font-size: 0.85rem; }
 .admin-drawer__img-preview {
   margin-top: 0.4rem;
   border-radius: var(--radius);

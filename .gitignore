@@ -9,6 +9,8 @@ node_modules/
 *.env
 
 # Compilados y caches
+backups/
+backend/uploads/
 dist/
 build/
 .next/

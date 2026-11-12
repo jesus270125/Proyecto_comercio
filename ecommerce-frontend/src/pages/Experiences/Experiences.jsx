@@ -25,10 +25,17 @@ function matchDuration(exp, filter) {
 
 export default function Experiences() {
   const [searchParams] = useSearchParams();
+  return <ExperiencesContent key={searchParams.toString()} searchParams={searchParams} />;
+}
+
+function ExperiencesContent({ searchParams }) {
   const [expList, setExpList] = useState(experiences);
-  const [activeCat, setActiveCat] = useState('all');
+  const [activeCat, setActiveCat] = useState(() => {
+    const cat = searchParams.get('cat');
+    return experienceCategories.find(c => c.id === cat || c.label === cat)?.id || 'all';
+  });
   const [activeDur, setActiveDur] = useState('all');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [maxPrice, setMaxPrice] = useState(1500);
 
   useEffect(() => {
@@ -38,17 +45,6 @@ export default function Experiences() {
       }
     }).catch(() => { /* fallback */ });
   }, []);
-
-  // Sync URL params with state
-  useEffect(() => {
-    const cat = searchParams.get('cat');
-    const q = searchParams.get('q') || '';
-    if (cat) {
-      const match = experienceCategories.find(c => c.id === cat || c.label === cat);
-      setActiveCat(match ? match.id : 'all');
-    }
-    setQuery(q);
-  }, [searchParams]);
 
   const filtered = expList.filter(exp => {
     const catOk = activeCat === 'all' || exp.category === activeCat;
@@ -73,7 +69,7 @@ export default function Experiences() {
           <span className="section-label" style={{ color: 'var(--green-300)' }}>Apurímac, Perú</span>
           <h1 className="experiences-hero__title">Experiencias que puedes vivir</h1>
           <p className="experiences-hero__sub">
-            {experiences.length} experiencias · Aventura, cultura, naturaleza y turismo vivencial
+            {expList.length} experiencias · Aventura, cultura, naturaleza y turismo vivencial
           </p>
         </div>
       </section>

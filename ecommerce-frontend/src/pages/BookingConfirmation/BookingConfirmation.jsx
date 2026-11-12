@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './BookingConfirmation.css';
 
 export default function BookingConfirmation() {
@@ -20,39 +19,7 @@ export default function BookingConfirmation() {
     );
   }
 
-  const { reservationId, form, nombreItem, tipo, precio, subtotal, serviceFee, total, nights, personas } = state;
-
-  /* ── Persist reservation to localStorage so admin can read it ── */
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('apu_reservas') || '[]');
-    const alreadySaved = stored.some((r) => r.id === reservationId);
-    if (!alreadySaved) {
-      const entry = {
-        id: reservationId,
-        nombre: form.nombre,
-        apellido: form.apellido,
-        correo: form.correo,
-        telefono: form.telefono,
-        llegada: form.llegada,
-        salida: form.salida,
-        personas,
-        observaciones: form.observaciones,
-        nombreItem,
-        tipo,
-        precio,
-        subtotal,
-        serviceFee,
-        total,
-        nights,
-        estado: 'pendiente',
-        creadoEn: new Date().toISOString(),
-      };
-      localStorage.setItem('apu_reservas', JSON.stringify([...stored, entry]));
-    }
-  // Only run once on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas } = state;
 
   return (
     <div className="confirmation-page">
@@ -66,14 +33,13 @@ export default function BookingConfirmation() {
           </div>
 
           <span className="section-label" style={{ color: 'var(--primary)', textAlign: 'center', display: 'block' }}>
-            Reserva confirmada
+            Solicitud registrada · Pendiente
           </span>
           <h1 className="confirmation-title">
             ¡Gracias, {form.nombre}!
           </h1>
           <p className="confirmation-subtitle">
-            Tu reserva ha sido registrada exitosamente. Recibirás un correo de confirmación
-            en <strong>{form.correo}</strong> (simulado).
+            Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.
           </p>
 
           {/* Reservation ID */}
@@ -149,15 +115,15 @@ export default function BookingConfirmation() {
           <div className="confirmation-pricing">
             <div className="confirmation-pricing__row">
               <span>Subtotal</span>
-              <span>S/ {subtotal}</span>
+              <span>S/ {subtotal.toFixed(2)}</span>
             </div>
             <div className="confirmation-pricing__row">
               <span>Tarifa de servicio</span>
-              <span>S/ {serviceFee}</span>
+              <span>S/ {serviceFee.toFixed(2)}</span>
             </div>
             <div className="confirmation-pricing__total">
               <strong>Total</strong>
-              <strong>S/ {total}</strong>
+              <strong>S/ {total.toFixed(2)}</strong>
             </div>
           </div>
 
@@ -169,9 +135,8 @@ export default function BookingConfirmation() {
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             <p>
-              Esta es una reserva <strong>simulada</strong> — Versión 1 académica.
-              No se ha realizado ningún cargo real. En una versión futura, esta confirmación
-              llegaría al correo del usuario y se almacenaría en una base de datos.
+              Esta solicitud de prueba se guarda en la base de datos con estado pendiente.
+              No se ha realizado ningún pago ni se ha enviado un correo.
             </p>
           </div>
 

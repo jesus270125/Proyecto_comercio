@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, NavLink, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authStore';
 import { experiences } from '../../data/experiences';
 import { accommodations } from '../../data/accommodations';
 import AdminDashboard from './sections/AdminDashboard';
@@ -80,7 +80,6 @@ export default function AdminLayout() {
   const [dests, setDests] = useState([]);
   const [exps, setExps] = useState(experiences);
   const [accs, setAccs] = useState(accommodations);
-  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (!user || !isAdmin) {
@@ -128,7 +127,6 @@ export default function AdminLayout() {
           price: parseFloat(a.price),
         })));
       }
-      setLoadingData(false);
     });
 
     return () => { isMounted = false; };

@@ -1,11 +1,18 @@
 REPORTE DE VERIFICACIÓN DEL PROYECTO
 Carpeta: C:\Users\jesus\OneDrive\Escritorio\comercio
-Fecha:   15/10/2026, 6:55:05 p. m.
+Fecha:   15/10/2026, 7:06:38 p. m.
 Node:    v24.11.1
 
 0. Repositorio y autoría (Git)
 ------------------------------
-  [X]  La carpeta no es un repositorio Git (no hay historial que revisar).
+  [X]  1 commits en 1 días distintos (del 2026-10-15 al 2026-10-15).
+       Autores:
+         1	jesus moron <231188@unamba.edu.pe>
+  [OK] Etiquetas de versión: v1.0
+         v1.0: 2026-10-15
+  [OK] Repositorio remoto: https://github.com/jesus270125/Proyecto_comercio.git
+  [OK] Ningún .env subido al repositorio.
+  [OK] node_modules no está en el repositorio.
   [OK] .gitignore incluye node_modules y .env.
 
 Estructura detectada
@@ -22,8 +29,7 @@ Estructura detectada
   [OK] React Router instalado; 18 rutas <Route> encontradas.
   [OK] 8 formularios <form>.
   [OK] Hay reglas responsive (@media o clases sm:/md:/lg:).
-       Compilando el frontend (npm run build)...
-  [OK] npm run build terminó sin errores.
+       Para compilar el frontend agregue --build (requiere haber hecho npm install).
 
 2. Versión 2 — Backend con API REST
 -----------------------------------
@@ -52,5 +58,5 @@ Estructura detectada
 
 Resumen
 -------
-  22 correctos · 3 para revisar · 1 problemas
+  25 correctos · 3 para revisar · 1 problemas
   Este reporte orienta la revisión; la nota se decide viendo el sistema funcionar y con la defensa del estudiante.

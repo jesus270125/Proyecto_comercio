@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authStore';
 import LoginModal from '../LoginModal/LoginModal';
 import './Navbar.css';
 
 export default function Navbar() {
-  const { user, isAdmin, logout } = useAuth();
+  const { isAdmin, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -157,7 +157,7 @@ export default function Navbar() {
       </div>
 
       {/* Login Modal */}
-      <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
+      {loginOpen && <LoginModal isOpen onClose={() => setLoginOpen(false)} />}
     </header>
   );
 }

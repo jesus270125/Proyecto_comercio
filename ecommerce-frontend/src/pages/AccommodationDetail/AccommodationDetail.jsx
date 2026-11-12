@@ -27,22 +27,26 @@ const amenityIcons = {
 export default function AccommodationDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [accommodation, setAccommodation] = useState(() => accommodations.find(a => a.slug === slug));
+  const [result, setResult] = useState(null);
   const [activeImg, setActiveImg] = useState(0);
+  const [today] = useState(() => new Date().toISOString().split('T')[0]);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
-  const [guests, setGuests] = useState(2);
+  const [guests, setGuests] = useState(1);
 
   useEffect(() => {
+    let active = true;
+    const fallback = accommodations.find(a => a.slug === slug);
     accommodationsService.getBySlug(slug)
       .then(res => {
-        if (res?.data) {
-          setAccommodation(prev => ({ ...prev, ...res.data }));
-        }
+        if (active) setResult({ slug, value: res?.data ? { ...fallback, ...res.data } : fallback });
       })
-      .catch(() => {});
+      .catch(() => { if (active) setResult({ slug, value: fallback }); });
+    return () => { active = false; };
   }, [slug]);
 
+  if (result?.slug !== slug) return <div className="container"><p>Cargando hospedaje…</p></div>;
+  const accommodation = result.value;
   if (!accommodation) {
     return (
       <div className="detail-not-found container">
@@ -56,11 +60,15 @@ export default function AccommodationDetail() {
   }
 
   const nearExp = experiences.filter(e => accommodation.nearExperiences?.includes(e.id)).slice(0, 2);
+  const gallery = [...new Set([accommodation.image, ...(Array.isArray(accommodation.gallery) ? accommodation.gallery : [])].filter(Boolean))];
+  const amenities = Array.isArray(accommodation.amenities) ? accommodation.amenities : [];
 
   const nights = checkIn && checkOut
     ? Math.max(0, Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000*60*60*24)))
     : 0;
-  const total = nights * accommodation.price;
+  const subtotal = nights * accommodation.price * guests;
+  const serviceFee = Math.round(subtotal * 0.05 * 100) / 100;
+  const total = Math.round((subtotal + serviceFee) * 100) / 100;
 
   const handleReservar = () => {
     const params = new URLSearchParams({
@@ -81,7 +89,7 @@ export default function AccommodationDetail() {
       <section className="acc-detail__gallery" aria-label="Galería de fotos">
         <div className="acc-detail__gallery-main">
           <img
-            src={accommodation.gallery[activeImg]}
+            src={gallery[activeImg] || gallery[0]}
             alt={`${accommodation.name} - foto ${activeImg + 1}`}
             className="acc-detail__gallery-img"
           />
@@ -96,9 +104,9 @@ export default function AccommodationDetail() {
             Volver
           </button>
         </div>
-        {accommodation.gallery.length > 1 && (
+        {gallery.length > 1 && (
           <div className="exp-detail__gallery-thumbs">
-            {accommodation.gallery.map((img, i) => (
+            {gallery.map((img, i) => (
               <button
                 key={i}
                 className={`exp-detail__gallery-thumb ${i === activeImg ? 'active' : ''}`}
@@ -131,8 +139,7 @@ export default function AccommodationDetail() {
 
             <div className="exp-detail__stats">
               <div className="exp-detail__stat">
-                <StarRating rating={accommodation.rating} />
-                <span><strong>{accommodation.rating}</strong> ({accommodation.reviews} reseñas)</span>
+                {Number(accommodation.rating) > 0 && Number(accommodation.reviews) > 0 ? <><StarRating rating={accommodation.rating} /><span><strong>{accommodation.rating}</strong> ({accommodation.reviews} reseñas de ejemplo)</span></> : <span>Sin valoraciones</span>}
               </div>
               <span className="exp-detail__stat-div" />
               <div className="exp-detail__stat">
@@ -156,12 +163,13 @@ export default function AccommodationDetail() {
           <section className="exp-detail__section" aria-labelledby="acc-desc">
             <h2 className="exp-detail__section-title" id="acc-desc">Sobre el hospedaje</h2>
             <p className="exp-detail__description">{accommodation.description}</p>
+            {accommodation.address && <p>Dirección: {accommodation.address}</p>}
           </section>
 
-          <section className="exp-detail__section" aria-labelledby="acc-amenities">
+          {amenities.length > 0 && <section className="exp-detail__section" aria-labelledby="acc-amenities">
             <h2 className="exp-detail__section-title" id="acc-amenities">Servicios y comodidades</h2>
             <div className="acc-detail__amenities">
-              {accommodation.amenities.map((a, i) => (
+              {amenities.map((a, i) => (
                 <div key={i} className="acc-detail__amenity">
                   <span className="acc-detail__amenity-icon" aria-hidden="true">
                     {amenityIcons[a] || amenityIcons.default}
@@ -170,7 +178,7 @@ export default function AccommodationDetail() {
                 </div>
               ))}
             </div>
-          </section>
+          </section>}
 
           {nearExp.length > 0 && (
             <section className="exp-detail__section" aria-labelledby="acc-near">
@@ -188,7 +196,7 @@ export default function AccommodationDetail() {
         <aside className="exp-detail__sidebar" aria-label="Panel de reserva">
           <div className="exp-detail__booking-card">
             <div className="exp-detail__price-display">
-              <span className="exp-detail__price-from">Por noche</span>
+              <span className="exp-detail__price-from">Por persona / noche</span>
               <span className="exp-detail__price-val">S/ {accommodation.price}</span>
             </div>
 
@@ -201,7 +209,7 @@ export default function AccommodationDetail() {
                     type="date"
                     className="form-input"
                     value={checkIn}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={today}
                     onChange={e => setCheckIn(e.target.value)}
                   />
                 </div>
@@ -212,7 +220,7 @@ export default function AccommodationDetail() {
                     type="date"
                     className="form-input"
                     value={checkOut}
-                    min={checkIn || new Date().toISOString().split('T')[0]}
+                    min={checkIn || today}
                     onChange={e => setCheckOut(e.target.value)}
                   />
                 </div>
@@ -235,12 +243,13 @@ export default function AccommodationDetail() {
             {nights > 0 && (
               <div className="acc-detail__calc">
                 <div className="exp-detail__booking-row">
-                  <span>S/ {accommodation.price} × {nights} noche{nights > 1 ? 's' : ''}</span>
-                  <strong>S/ {total}</strong>
+                  <span>S/ {accommodation.price} × {guests} persona{guests > 1 ? 's' : ''} × {nights} noche{nights > 1 ? 's' : ''}</span>
+                  <strong>S/ {subtotal.toFixed(2)}</strong>
                 </div>
+                <div className="exp-detail__booking-row"><span>Tarifa de servicio (5 %)</span><strong>S/ {serviceFee.toFixed(2)}</strong></div>
                 <div className="exp-detail__booking-row acc-detail__total">
                   <span>Total estimado</span>
-                  <strong className="text-primary">S/ {total}</strong>
+                  <strong className="text-primary">S/ {total.toFixed(2)}</strong>
                 </div>
               </div>
             )}
@@ -253,7 +262,7 @@ export default function AccommodationDetail() {
               Reservar hospedaje
             </button>
             <p className="exp-detail__booking-note">
-              Sin pagos reales. La reserva es simulada — V1 académica.
+              Solicitud de prueba sin pago real. El precio es por persona y por noche.
             </p>
           </div>
         </aside>

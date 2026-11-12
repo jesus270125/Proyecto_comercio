@@ -19,8 +19,9 @@ const defaultExpState = {
   location: 'Abancay',
   duration: '1 día',
   difficulty: 'Media',
+  groupSize: '', district: '', gallery: '', includes: '', excludes: '', tags: '', itinerary: [],
   price: '',
-  image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+  image: '',
   featured: false,
 };
 
@@ -68,6 +69,10 @@ export default function AdminExperiencias({ experiences, setExperiences }) {
       location: exp.location || 'Abancay',
       duration: exp.duration || '1 día',
       difficulty: exp.difficulty || 'Media',
+      district: exp.district || '', groupSize: exp.groupSize || '',
+      gallery: (exp.gallery || []).join('\n'), includes: (exp.includes || []).join('\n'),
+      excludes: (exp.excludes || []).join('\n'), tags: (exp.tags || []).join('\n'),
+      itinerary: Array.isArray(exp.itinerary) ? exp.itinerary.map(day => ({ ...day })) : [],
       price: exp.price !== undefined ? exp.price : '',
       image: exp.image || '',
       featured: exp.featured || false,
@@ -108,6 +113,8 @@ export default function AdminExperiencias({ experiences, setExperiences }) {
         ...form,
         description: form.description || form.shortDescription,
         price: parseFloat(form.price),
+        ...Object.fromEntries(['gallery', 'includes', 'excludes', 'tags'].map(key => [key, form[key].split('\n').map(value => value.trim()).filter(Boolean)])),
+        itinerary: form.itinerary.filter(day => day.title.trim() || day.description.trim()).map((day, index) => ({ day: index + 1, title: day.title.trim(), description: day.description.trim() })),
       };
 
       if (editingId) {
@@ -129,7 +136,7 @@ export default function AdminExperiencias({ experiences, setExperiences }) {
           name: res.data.nombre,
           reviews: 0,
           price: parseFloat(res.data.price),
-          rating: 5.0,
+          rating: 0,
         };
         setExperiences((prev) => [created, ...prev]);
       }

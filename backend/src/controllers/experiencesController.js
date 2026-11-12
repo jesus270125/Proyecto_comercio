@@ -26,7 +26,7 @@ async function list(req, res, next) {
       name: e.nombre,
       reviews: e.reviewsCount,
       price: parseFloat(e.price),
-      rating: parseFloat(e.rating) || 5.0,
+      rating: parseFloat(e.rating) || 0,
     }));
     res.json({ data: formatted, total: formatted.length });
   } catch (err) { next(err); }
@@ -45,7 +45,7 @@ async function detail(req, res, next) {
       name: item.nombre,
       reviews: item.reviewsCount,
       price: parseFloat(item.price),
-      rating: parseFloat(item.rating) || 5.0,
+      rating: parseFloat(item.rating) || 0,
     };
     res.json({ data: formatted });
   } catch (err) { next(err); }
@@ -89,7 +89,7 @@ async function adminCreate(req, res, next) {
         name: item.nombre,
         reviews: item.reviewsCount,
         price: parseFloat(item.price),
-        rating: parseFloat(item.rating) || 5.0,
+        rating: parseFloat(item.rating) || 0,
       },
     });
   } catch (err) { next(err); }
@@ -111,7 +111,7 @@ async function adminUpdate(req, res, next) {
         name: item.nombre,
         reviews: item.reviewsCount,
         price: parseFloat(item.price),
-        rating: parseFloat(item.rating) || 5.0,
+        rating: parseFloat(item.rating) || 0,
       },
     });
   } catch (err) { next(err); }

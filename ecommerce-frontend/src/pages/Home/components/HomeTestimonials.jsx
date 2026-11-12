@@ -5,12 +5,12 @@ export default function HomeTestimonials() {
     <section className="section home__testimonials" aria-labelledby="home-test-title">
       <div className="container">
         <div className="section-header centered">
-          <span className="section-label">Lo que dicen los viajeros</span>
+          <span className="section-label">Contenido de demostración</span>
           <h2 className="section-title" id="home-test-title">
-            Experiencias reales
+            Testimonios de ejemplo
           </h2>
           <p className="section-subtitle">
-            Testimonios de viajeros que vivieron Apurímac. Datos de demostración.
+            Opiniones ficticias incluidas para mostrar cómo funcionaría esta sección.
           </p>
         </div>
 

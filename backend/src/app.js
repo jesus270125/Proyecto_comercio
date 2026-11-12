@@ -5,6 +5,7 @@ const express = require('express');
 const helmet  = require('helmet');
 const cors    = require('cors');
 const { rateLimit } = require('express-rate-limit');
+const path = require('path');
 
 const authRoutes   = require('./routes/auth');
 const publicRoutes = require('./routes/public');
@@ -18,19 +19,23 @@ app.use(helmet());
 
 // ── CORS ──────────────────────────────────────────────────
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
+  process.env.FRONTEND_URL,
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:5173', 'http://localhost:3000']),
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Permitir requests sin origin (Postman, curl, etc.) en desarrollo
-    if (!origin || process.env.NODE_ENV === 'development') return cb(null, true);
+    // Las peticiones sin Origin (por ejemplo curl) no requieren cabeceras CORS.
+    if (!origin) return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origen no permitido: ${origin}`));
+    cb(null, false);
   },
   credentials: true,
+}));
+
+// Las imágenes son públicas para mostrarlas en el catálogo; solo un administrador puede subirlas.
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads'), {
+  setHeaders: res => res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'),
 }));
 
 // ── Rate Limit global ─────────────────────────────────────

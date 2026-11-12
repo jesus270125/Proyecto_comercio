@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 export default function SearchBar() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ destino: '', tipo: '', fecha: '', personas: '2' });
+  const [today] = useState(() => new Date().toISOString().split('T')[0]);
 
   const handleChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -57,7 +58,7 @@ export default function SearchBar() {
           className="searchbar__input"
           value={form.fecha}
           onChange={handleChange}
-          min={new Date().toISOString().split('T')[0]}
+          min={today}
         />
       </div>
       <div className="searchbar__divider" />

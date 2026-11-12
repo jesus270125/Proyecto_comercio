@@ -10,7 +10,6 @@ const IconTrend = () => (
 
 export default function AdminDashboard({ reservas, experiences, accommodations }) {
   const confirmed = reservas.filter(r => r.estado === 'confirmada').length;
-  const pending   = reservas.filter(r => r.estado === 'pendiente').length;
   const totalIngresos = reservas
     .filter(r => r.estado !== 'cancelada')
     .reduce((acc, r) => acc + (Number(r.total) || 0), 0);

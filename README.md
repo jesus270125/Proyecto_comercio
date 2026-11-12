@@ -193,5 +193,7 @@ npm run dev
 
 ## 9. Limitaciones y Declaración Honesta
 
+- **Imágenes subidas:** se guardan en `backend/uploads/`, fuera de Git. Incluye esa carpeta junto con el respaldo de MySQL; una copia de la base de datos por sí sola no contiene las fotos. El almacenamiento local necesita un volumen persistente o un servicio de archivos al desplegar en la nube. Las imágenes se suben al seleccionarlas, incluso si después se cancela el formulario.
+
 - **Pasarela de pago:** Las reservas procesadas en esta entrega simulan el pago asignando el estado inicial `PENDIENTE` y `SIN_PAGO`/`SIMULADO`, conforme al alcance de la V3 académica.
 - **Entorno MySQL:** Requiere tener el servicio de MySQL 8.0 corriendo localmente con las credenciales indicadas en `.env`.

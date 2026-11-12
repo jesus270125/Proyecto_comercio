@@ -4,7 +4,7 @@ const howItWorks = [
   { step: '01', title: 'Explora', desc: 'Navega por nuestras experiencias y hospedajes. Filtra por categoría, ubicación o precio.' },
   { step: '02', title: 'Elige', desc: 'Selecciona la experiencia o el hospedaje que te inspire. Lee los detalles y el itinerario.' },
   { step: '03', title: 'Reserva', desc: 'Completa el formulario con tus datos, fecha y número de personas. Sin pagos por ahora.' },
-  { step: '04', title: 'Vive', desc: 'Recibe tu confirmación y prepárate para vivir Apurímac de una forma diferente.' },
+  { step: '04', title: 'Revisa', desc: 'Consulta el código y el estado pendiente de tu solicitud de prueba.' },
 ];
 
 export default function HomeHowItWorks() {

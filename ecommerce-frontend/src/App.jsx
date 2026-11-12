@@ -31,8 +31,9 @@ function AppRoutes() {
       <Route path="/*" element={
         <>
           <ScrollToTop />
+          <a className="skip-link" href="#main-content">Saltar al contenido principal</a>
           <Navbar />
-          <main className="app-main" id="main-content">
+          <main className="app-main" id="main-content" tabIndex="-1">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/destinos" element={<Destinations />} />

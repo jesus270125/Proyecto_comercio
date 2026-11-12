@@ -44,15 +44,15 @@ export default function HomeHero() {
         {/* Stats */}
         <div className="hero__stats">
           <div className="hero__stat">
-            <strong>12+</strong><span>Experiencias únicas</span>
+            <strong>Explora</strong><span>Experiencias</span>
           </div>
           <div className="hero__stat-divider" />
           <div className="hero__stat">
-            <strong>10+</strong><span>Hospedajes auténticos</span>
+            <strong>Descansa</strong><span>Hospedajes</span>
           </div>
           <div className="hero__stat-divider" />
           <div className="hero__stat">
-            <strong>6</strong><span>Destinos en Apurímac</span>
+            <strong>Conoce</strong><span>Destinos en Apurímac</span>
           </div>
         </div>
       </div>

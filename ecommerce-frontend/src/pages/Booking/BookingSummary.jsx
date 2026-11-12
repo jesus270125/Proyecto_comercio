@@ -34,23 +34,23 @@ export default function BookingSummary({ tipo, nombre, form, nights, precio, sub
           </div>
         </div>
 
-        <div className="booking-summary__prices">
+        {tipo !== 'hospedaje' || nights > 0 ? <div className="booking-summary__prices">
           <div className="booking-summary__row">
             <span>
               S/ {precio} × {form.personas} {Number(form.personas) > 1 ? 'personas' : 'persona'}
               {tipo === 'hospedaje' && nights > 0 && ` × ${nights} noche${nights > 1 ? 's' : ''}`}
             </span>
-            <span>S/ {subtotal}</span>
+            <span>S/ {subtotal.toFixed(2)}</span>
           </div>
           <div className="booking-summary__row">
             <span>Tarifa de servicio (5%)</span>
-            <span>S/ {serviceFee}</span>
+            <span>S/ {serviceFee.toFixed(2)}</span>
           </div>
           <div className="booking-summary__total">
-            <strong>Total</strong>
-            <strong className="booking-summary__total-val">S/ {total}</strong>
+            <strong>Total estimado</strong>
+            <strong className="booking-summary__total-val">S/ {total.toFixed(2)}</strong>
           </div>
-        </div>
+        </div> : <p>Selecciona las fechas para calcular el importe.</p>}
 
         <div className="booking-summary__note">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -59,8 +59,7 @@ export default function BookingSummary({ tipo, nombre, form, nights, precio, sub
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <p>
-            Esto es una reserva simulada. No se realizará ningún pago real.
-            Esta es la Versión 1 académica del proyecto.
+            Solicitud de prueba sin pago real. El servidor calcula el importe definitivo al registrarla.
           </p>
         </div>
       </div>

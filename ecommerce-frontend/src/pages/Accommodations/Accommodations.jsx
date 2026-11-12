@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { accommodations, accommodationTypes } from '../../data/accommodations';
 import { accommodationsService } from '../../services/api';
 import AccommodationCard from '../../components/AccommodationCard/AccommodationCard';

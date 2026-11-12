@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import './Footer.css';
 
 export default function Footer() {
-  const year = new Date().getFullYear();
+  const [year] = useState(() => new Date().getFullYear());
 
   return (
     <footer className="footer">
@@ -26,7 +27,6 @@ export default function Footer() {
             Plataforma de turismo vivencial y hospedajes auténticos en Apurímac, Perú.
             Conectamos viajeros con experiencias y comunidades reales.
           </p>
-          {/* Social icons (decorativos en V1) */}
           <div className="footer__social">
             <a href="#" className="footer__social-link" aria-label="Instagram">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -85,7 +85,7 @@ export default function Footer() {
 
       <div className="footer__bottom">
         <div className="container footer__bottom-inner">
-          <p>© {year} Apurímac Turismo · Plataforma demostrativa — V1 académica</p>
+          <p>© {year} Apurímac Turismo · Plataforma académica de demostración</p>
           <p className="footer__bottom-note">Desarrollado por Jesús Alejandro Morón Luna · Proyecto universitario</p>
         </div>
       </div>

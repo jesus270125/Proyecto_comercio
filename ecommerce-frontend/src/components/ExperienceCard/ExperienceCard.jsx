@@ -72,9 +72,7 @@ export default function ExperienceCard({ experience }) {
 
         <div className="exp-card__footer">
           <div className="exp-card__rating">
-            <StarRating rating={rating} />
-            <span className="exp-card__rating-num">{rating}</span>
-            <span className="exp-card__reviews">({reviews})</span>
+            {Number(rating) > 0 && Number(reviews) > 0 ? <><StarRating rating={rating} /><span className="exp-card__rating-num">{rating}</span><span className="exp-card__reviews">({reviews}, ejemplo)</span></> : <span className="exp-card__reviews">Sin valoraciones</span>}
           </div>
           <div className="exp-card__price">
             <span className="exp-card__price-from">Desde</span>

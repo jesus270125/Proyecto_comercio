@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { reservationsService } from '../../services/api';
+import { reservationsService, experiencesService, accommodationsService } from '../../services/api';
 import BookingSummary from './BookingSummary';
 import { initialForm, validateForm } from './bookingValidation';
 import './Booking.css';
@@ -8,32 +8,39 @@ import './Booking.css';
 export default function Booking() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => ({ ...initialForm, llegada: searchParams.get('checkin') || '', salida: searchParams.get('checkout') || '', personas: searchParams.get('personas') || '2' }));
+  const [today] = useState(() => new Date().toISOString().split('T')[0]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [itemResult, setItemResult] = useState(null);
 
   const tipo   = searchParams.get('tipo') || 'experiencia';
-  const nombre = searchParams.get('nombre') || 'Experiencia en Apurímac';
-  const precio = Number(searchParams.get('precio') || 0);
-  const checkin  = searchParams.get('checkin') || '';
-  const checkout = searchParams.get('checkout') || '';
-
+  const itemId = searchParams.get('id');
+  const itemKey = `${tipo}:${itemId}`;
   useEffect(() => {
-    setForm(f => ({
-      ...f,
-      llegada: checkin,
-      salida: checkout,
-      personas: searchParams.get('personas') || '2'
-    }));
-  }, [checkin, checkout, searchParams]);
-
+    let active = true;
+    if (!['experiencia', 'hospedaje'].includes(tipo) || !/^\d+$/.test(itemId || '')) {
+      Promise.resolve().then(() => { if (active) setItemResult({ key: itemKey, error: 'Selecciona una experiencia o un hospedaje del catálogo.' }); });
+      return () => { active = false; };
+    }
+    const service = tipo === 'hospedaje' ? accommodationsService : experiencesService;
+    service.getAll().then(res => {
+      const item = res.data?.find(entry => String(entry.id) === itemId);
+      if (active) setItemResult({ key: itemKey, item, error: item ? '' : 'Este servicio ya no está disponible.' });
+    }).catch(() => { if (active) setItemResult({ key: itemKey, error: 'No se pudo consultar el precio. Inténtalo de nuevo.' }); });
+    return () => { active = false; };
+  }, [tipo, itemId, itemKey]);
+  const item = itemResult?.key === itemKey ? itemResult.item : null;
+  const itemError = itemResult?.key === itemKey ? itemResult.error : '';
+  const nombre = item?.name || '';
+  const precio = Number(item?.price || 0);
   const nights = form.llegada && form.salida
     ? Math.max(0, Math.ceil((new Date(form.salida) - new Date(form.llegada)) / (1000*60*60*24)))
-    : 1;
+    : 0;
 
   const subtotal = precio * Number(form.personas) * (tipo === 'hospedaje' ? nights : 1);
-  const serviceFee = Math.round(subtotal * 0.05);
-  const total = subtotal + serviceFee;
+  const serviceFee = Math.round(subtotal * 0.05 * 100) / 100;
+  const total = Math.round((subtotal + serviceFee) * 100) / 100;
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -43,6 +50,7 @@ export default function Booking() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!item) return;
     const errs = validateForm(form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -51,7 +59,7 @@ export default function Booking() {
     setSubmitting(true);
     try {
       const isHospedaje = tipo.toLowerCase() === 'hospedaje';
-      const targetId = parseInt(searchParams.get('id') || '1', 10);
+      const targetId = Number(itemId);
       const payload = {
         guestNombre: form.nombre,
         guestApellido: form.apellido,
@@ -67,7 +75,8 @@ export default function Booking() {
       };
 
       const res = await reservationsService.create(payload);
-      const reservationId = res.data?.codigo || ('APU-' + Math.random().toString(36).substr(2, 8).toUpperCase());
+      if (!res.data?.codigo) throw new Error('No se recibió la confirmación del servidor.');
+      const reservationId = res.data.codigo;
 
       navigate('/confirmacion', {
         state: {
@@ -75,10 +84,10 @@ export default function Booking() {
           form,
           nombreItem: nombre,
           tipo,
-          precio,
-          subtotal,
-          serviceFee,
-          total: res.data?.total ? parseFloat(res.data.total) : total,
+          precio: Number(res.data.precioUnitario),
+          subtotal: Number(res.data.subtotal),
+          serviceFee: Number(res.data.serviceFee),
+          total: Number(res.data.total),
           nights: isHospedaje ? nights : null,
           personas: Number(form.personas)
         }
@@ -95,7 +104,7 @@ export default function Booking() {
       <div className="container">
         <div className="booking-header">
           <span className="section-label">Formulario de reserva</span>
-          <h1 className="booking-title">Confirma tu reserva</h1>
+          <h1 className="booking-title">Registra tu solicitud</h1>
           <p className="booking-subtitle">
             Completa los datos. La reserva es simulada — sin pago real en esta versión.
           </p>
@@ -104,9 +113,9 @@ export default function Booking() {
         <div className="booking-layout">
           {/* Form */}
           <form className="booking-form" onSubmit={handleSubmit} noValidate id="booking-form">
-            {errors.submit && (
-              <div style={{ background: '#fef2f2', border: '1px solid #f87171', color: '#991b1b', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                {errors.submit}
+            {(errors.submit || itemError) && (
+              <div role="alert" style={{ background: '#fef2f2', border: '1px solid #f87171', color: '#991b1b', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                {errors.submit || itemError}
               </div>
             )}
             <section className="booking-section" aria-labelledby="personal-data">
@@ -117,6 +126,8 @@ export default function Booking() {
                   <input
                     id="book-nombre"
                     name="nombre"
+                    aria-invalid={Boolean(errors.nombre)}
+                    aria-describedby={errors.nombre ? 'error-nombre' : undefined}
                     type="text"
                     className={`form-input ${errors.nombre ? 'form-input--error' : ''}`}
                     placeholder="Tu nombre"
@@ -124,13 +135,15 @@ export default function Booking() {
                     onChange={handleChange}
                     autoComplete="given-name"
                   />
-                  {errors.nombre && <span className="form-error">{errors.nombre}</span>}
+                  {errors.nombre && <span id="error-nombre" className="form-error">{errors.nombre}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="book-apellido">Apellido *</label>
                   <input
                     id="book-apellido"
                     name="apellido"
+                    aria-invalid={Boolean(errors.apellido)}
+                    aria-describedby={errors.apellido ? 'error-apellido' : undefined}
                     type="text"
                     className={`form-input ${errors.apellido ? 'form-input--error' : ''}`}
                     placeholder="Tu apellido"
@@ -138,13 +151,15 @@ export default function Booking() {
                     onChange={handleChange}
                     autoComplete="family-name"
                   />
-                  {errors.apellido && <span className="form-error">{errors.apellido}</span>}
+                  {errors.apellido && <span id="error-apellido" className="form-error">{errors.apellido}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="book-correo">Correo electrónico *</label>
                   <input
                     id="book-correo"
                     name="correo"
+                    aria-invalid={Boolean(errors.correo)}
+                    aria-describedby={errors.correo ? 'error-correo' : undefined}
                     type="email"
                     className={`form-input ${errors.correo ? 'form-input--error' : ''}`}
                     placeholder="tu@correo.com"
@@ -152,13 +167,15 @@ export default function Booking() {
                     onChange={handleChange}
                     autoComplete="email"
                   />
-                  {errors.correo && <span className="form-error">{errors.correo}</span>}
+                  {errors.correo && <span id="error-correo" className="form-error">{errors.correo}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="book-telefono">Teléfono *</label>
                   <input
                     id="book-telefono"
                     name="telefono"
+                    aria-invalid={Boolean(errors.telefono)}
+                    aria-describedby={errors.telefono ? 'error-telefono' : undefined}
                     type="tel"
                     className={`form-input ${errors.telefono ? 'form-input--error' : ''}`}
                     placeholder="+51 999 999 999"
@@ -166,7 +183,7 @@ export default function Booking() {
                     onChange={handleChange}
                     autoComplete="tel"
                   />
-                  {errors.telefono && <span className="form-error">{errors.telefono}</span>}
+                  {errors.telefono && <span id="error-telefono" className="form-error">{errors.telefono}</span>}
                 </div>
               </div>
             </section>
@@ -181,13 +198,15 @@ export default function Booking() {
                   <input
                     id="book-llegada"
                     name="llegada"
+                    aria-invalid={Boolean(errors.llegada)}
+                    aria-describedby={errors.llegada ? 'error-llegada' : undefined}
                     type="date"
                     className={`form-input ${errors.llegada ? 'form-input--error' : ''}`}
                     value={form.llegada}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={today}
                     onChange={handleChange}
                   />
-                  {errors.llegada && <span className="form-error">{errors.llegada}</span>}
+                  {errors.llegada && <span id="error-llegada" className="form-error">{errors.llegada}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="book-salida">
@@ -196,13 +215,15 @@ export default function Booking() {
                   <input
                     id="book-salida"
                     name="salida"
+                    aria-invalid={Boolean(errors.salida)}
+                    aria-describedby={errors.salida ? 'error-salida' : undefined}
                     type="date"
                     className={`form-input ${errors.salida ? 'form-input--error' : ''}`}
                     value={form.salida}
-                    min={form.llegada || new Date().toISOString().split('T')[0]}
+                    min={form.llegada || today}
                     onChange={handleChange}
                   />
-                  {errors.salida && <span className="form-error">{errors.salida}</span>}
+                  {errors.salida && <span id="error-salida" className="form-error">{errors.salida}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="book-personas">Número de personas</label>
@@ -243,7 +264,7 @@ export default function Booking() {
               <button
                 type="submit"
                 className="btn btn-primary btn-lg booking-submit"
-                disabled={submitting}
+                disabled={submitting || !item}
                 id="booking-submit-btn"
               >
                 {submitting ? (
@@ -253,7 +274,7 @@ export default function Booking() {
                   </>
                 ) : (
                   <>
-                    Confirmar reserva
+                    Registrar solicitud
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                     </svg>
@@ -261,14 +282,13 @@ export default function Booking() {
                 )}
               </button>
               <p className="booking-legal">
-                Al confirmar, aceptas los términos de esta plataforma demostrativa.
-                No se realizará ningún cargo real.
+                Se registrará una solicitud de prueba. No se realizará ningún cargo real.
               </p>
             </div>
           </form>
 
           {/* Summary */}
-          <BookingSummary
+          {item ? <BookingSummary
             tipo={tipo}
             nombre={nombre}
             form={form}
@@ -277,7 +297,7 @@ export default function Booking() {
             subtotal={subtotal}
             serviceFee={serviceFee}
             total={total}
-          />
+          /> : <aside className="booking-summary" aria-live="polite">{itemError || 'Consultando disponibilidad y precio…'}</aside>}
         </div>
       </div>
     </div>

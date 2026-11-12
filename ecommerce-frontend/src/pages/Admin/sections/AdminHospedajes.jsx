@@ -14,7 +14,8 @@ const TIPOS = ['Todos', 'Casa Rural', 'Lodge', 'Albergue', 'Hotel', 'Hostal'];
 const defaultAccState = {
   nombre: '', description: '', type: 'Casa Rural', location: 'Abancay',
   district: 'Centro Histórico', price: '', capacity: '4', rooms: '2',
-  image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80', featured: false,
+  address: '', gallery: '', amenities: '',
+  image: '', featured: false,
 };
 
 export default function AdminHospedajes({ accommodations, setAccommodations }) {
@@ -63,6 +64,7 @@ export default function AdminHospedajes({ accommodations, setAccommodations }) {
       type: acc.type || 'Casa Rural',
       location: acc.location || 'Abancay',
       district: acc.district || '',
+      address: acc.address || '', gallery: (acc.gallery || []).join('\n'), amenities: (acc.amenities || []).join('\n'),
       price: acc.price !== undefined ? acc.price : '',
       capacity: acc.capacity ? acc.capacity.toString() : '4',
       rooms: acc.rooms ? acc.rooms.toString() : '2',
@@ -106,6 +108,8 @@ export default function AdminHospedajes({ accommodations, setAccommodations }) {
         price: parseFloat(form.price),
         capacity: parseInt(form.capacity) || 2,
         rooms: parseInt(form.rooms) || 1,
+        gallery: form.gallery.split('\n').map(value => value.trim()).filter(Boolean),
+        amenities: form.amenities.split('\n').map(value => value.trim()).filter(Boolean),
       };
 
       if (editingId) {
@@ -127,7 +131,7 @@ export default function AdminHospedajes({ accommodations, setAccommodations }) {
           name: res.data.nombre,
           reviews: 0,
           price: parseFloat(res.data.price),
-          rating: 5.0,
+          rating: 0,
         };
         setAccommodations((prev) => [created, ...prev]);
       }

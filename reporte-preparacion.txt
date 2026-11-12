@@ -1,0 +1,70 @@
+REPORTE DE VERIFICACIÓN DEL PROYECTO
+Carpeta: C:\Users\jesus\OneDrive\Escritorio\comercio
+Fecha:   12/11/2026, 12:31:36 a. m.
+Node:    v24.11.1
+
+0. Repositorio y autoría (Git)
+------------------------------
+  [X]  1 commits en 1 días distintos (del 2026-10-15 al 2026-10-15).
+       Autores:
+         1	jesus moron <231188@unamba.edu.pe>
+  [OK] Etiquetas de versión: v1.0
+         v1.0: 2026-10-15
+  [OK] Repositorio remoto: https://github.com/jesus270125/Proyecto_comercio.git
+  [OK] Ningún .env subido al repositorio.
+  [OK] node_modules no está en el repositorio.
+  [OK] .gitignore incluye node_modules y .env.
+
+Estructura detectada
+--------------------
+       package.json en backend: @prisma/client, bcryptjs, cors, dotenv, express, helmet, jsonwebtoken, prisma
+       package.json en ecommerce-frontend: react, react-dom, react-router-dom, vite
+
+1. Versión 1 — Frontend en React
+--------------------------------
+  [OK] Proyecto React en ecommerce-frontend
+  [OK] 40 archivos de componentes (.jsx/.tsx).
+  [!]  Archivo muy grande (303 líneas): ecommerce-frontend/src/pages/Admin/sections/AdminExperiencias.jsx. Probablemente debería dividirse.
+  [OK] useState usado 76 veces.
+  [OK] useEffect usado 19 veces.
+  [OK] React Router instalado; 18 rutas <Route> encontradas.
+  [OK] 8 formularios <form>.
+  [OK] Hay reglas responsive (@media o clases sm:/md:/lg:).
+       Para compilar el frontend agregue --build (requiere haber hecho npm install).
+
+2. Versión 2 — Backend con API REST
+-----------------------------------
+  [OK] Backend en backend
+  [OK] Rutas: GET 13 · POST 7 · PUT/PATCH 7 · DELETE 4
+  [OK] CORS configurado (paquete cors o cabecera manual).
+  [OK] 1 archivos del frontend consumen la API (fetch/axios).
+  [OK] Backend organizado: 8 archivos de rutas/controladores.
+  [OK] El puerto se toma de process.env.PORT.
+
+3. Versión 3 — Base de datos, login y seguridad
+-----------------------------------------------
+  [OK] Base de datos: prisma, @prisma/client
+  [OK] Contraseñas con hash (bcrypt/bcryptjs/argon2).
+  [OK] Autenticación con token o sesión (jsonwebtoken/express-session/passport).
+  [OK] El backend menciona roles 7 veces.
+  [!]  Sin librería de validación: revisar que el backend valide los datos a mano.
+  [OK] No se detectaron consultas SQL armadas concatenando texto.
+
+4. Versión 4 — Despliegue y secretos
+------------------------------------
+  [OK] No se detectaron contraseñas ni claves escritas en el código.
+  [!]  El frontend tiene "localhost" fijo en: ecommerce-frontend/src/services/api.js. En producción debe usar una variable (import.meta.env / process.env).
+  [OK] README.md con 1383 palabras.
+  [!]  No hay archivos de configuración de despliegue (en Vercel/Netlify sin _redirects o vercel.json, F5 en una ruta da 404).
+
+Prueba de la API: http://localhost:4000/api/v1/experiences
+----------------------------------------------------------
+  [OK] Responde 200 en 165 ms.
+  [OK] Devuelve JSON.
+  [OK] CORS activo: Access-Control-Allow-Origin = http://ejemplo-de-origen.com
+  [OK] POST con datos vacíos responde 404.
+
+Resumen
+-------
+  29 correctos · 4 para revisar · 1 problemas
+  Este reporte orienta la revisión; la nota se decide viendo el sistema funcionar y con la defensa del estudiante.

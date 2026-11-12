@@ -11,7 +11,8 @@
     "db:push": "npx prisma db push",
     "generate": "npx prisma generate",
     "seed": "node prisma/seed.js",
-    "studio": "npx prisma studio"
+    "studio": "npx prisma studio",
+    "test": "node --test"
   },
   "keywords": [
     "apurimac",
@@ -34,7 +35,12 @@
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
+    "nodemon": "3.1.11",
     "prisma": "^6.19.3"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "^8.0.2"
+    }
   }
 }

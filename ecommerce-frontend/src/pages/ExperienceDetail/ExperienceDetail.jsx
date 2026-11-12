@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { experiences } from '../../data/experiences';
 import { accommodations } from '../../data/accommodations';
@@ -21,19 +21,22 @@ function StarRating({ rating }) {
 export default function ExperienceDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [experience, setExperience] = useState(() => experiences.find(e => e.slug === slug));
+  const [result, setResult] = useState(null);
   const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
+    let active = true;
+    const fallback = experiences.find(e => e.slug === slug);
     experiencesService.getBySlug(slug)
       .then(res => {
-        if (res?.data) {
-          setExperience(prev => ({ ...prev, ...res.data }));
-        }
+        if (active) setResult({ slug, value: res?.data ? { ...fallback, ...res.data } : fallback });
       })
-      .catch(() => {});
+      .catch(() => { if (active) setResult({ slug, value: fallback }); });
+    return () => { active = false; };
   }, [slug]);
 
+  if (result?.slug !== slug) return <div className="container"><p>Cargando experiencia…</p></div>;
+  const experience = result.value;
   if (!experience) {
     return (
       <div className="detail-not-found container">
@@ -47,6 +50,9 @@ export default function ExperienceDetail() {
   }
 
   const relatedAcc = accommodations.filter(a => experience.relatedAccommodations?.includes(a.id)).slice(0, 3);
+  const gallery = [...new Set([experience.image, ...(Array.isArray(experience.gallery) ? experience.gallery : [])].filter(Boolean))];
+  const includes = Array.isArray(experience.includes) ? experience.includes : [];
+  const excludes = Array.isArray(experience.excludes) ? experience.excludes : [];
 
   return (
     <div className="exp-detail">
@@ -54,7 +60,7 @@ export default function ExperienceDetail() {
       <section className="exp-detail__gallery" aria-label="Galería de imágenes">
         <div className="exp-detail__gallery-main">
           <img
-            src={experience.gallery[activeImg]}
+            src={gallery[activeImg] || gallery[0]}
             alt={`${experience.name} - imagen ${activeImg + 1}`}
             className="exp-detail__gallery-img"
           />
@@ -69,9 +75,9 @@ export default function ExperienceDetail() {
             Volver
           </button>
         </div>
-        {experience.gallery.length > 1 && (
+        {gallery.length > 1 && (
           <div className="exp-detail__gallery-thumbs">
-            {experience.gallery.map((img, i) => (
+            {gallery.map((img, i) => (
               <button
                 key={i}
                 className={`exp-detail__gallery-thumb ${i === activeImg ? 'active' : ''}`}
@@ -105,8 +111,7 @@ export default function ExperienceDetail() {
 
             <div className="exp-detail__stats">
               <div className="exp-detail__stat">
-                <StarRating rating={experience.rating} />
-                <span><strong>{experience.rating}</strong> ({experience.reviews} reseñas)</span>
+                {Number(experience.rating) > 0 && Number(experience.reviews) > 0 ? <><StarRating rating={experience.rating} /><span><strong>{experience.rating}</strong> ({experience.reviews} reseñas de ejemplo)</span></> : <span>Sin valoraciones</span>}
               </div>
               <span className="exp-detail__stat-div" />
               <div className="exp-detail__stat">
@@ -142,13 +147,13 @@ export default function ExperienceDetail() {
           </section>
 
           {/* Includes / Excludes */}
-          <section className="exp-detail__includes-section" aria-labelledby="inc-heading">
+          {(includes.length > 0 || excludes.length > 0) && <section className="exp-detail__includes-section" aria-labelledby="inc-heading">
             <h2 className="exp-detail__section-title" id="inc-heading">¿Qué incluye?</h2>
             <div className="exp-detail__inc-grid">
               <div>
                 <h3 className="exp-detail__inc-title exp-detail__inc-title--yes">Incluye</h3>
                 <ul className="exp-detail__inc-list">
-                  {experience.includes.map((item, i) => (
+                  {includes.map((item, i) => (
                     <li key={i} className="exp-detail__inc-item exp-detail__inc-item--yes">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <polyline points="20 6 9 17 4 12"/>
@@ -161,7 +166,7 @@ export default function ExperienceDetail() {
               <div>
                 <h3 className="exp-detail__inc-title exp-detail__inc-title--no">No incluye</h3>
                 <ul className="exp-detail__inc-list">
-                  {experience.excludes.map((item, i) => (
+                  {excludes.map((item, i) => (
                     <li key={i} className="exp-detail__inc-item exp-detail__inc-item--no">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -172,7 +177,7 @@ export default function ExperienceDetail() {
                 </ul>
               </div>
             </div>
-          </section>
+          </section>}
 
           {/* Itinerary */}
           {experience.itinerary?.length > 0 && (
@@ -249,7 +254,7 @@ export default function ExperienceDetail() {
             </button>
 
             <p className="exp-detail__booking-note">
-              Sin pagos. La reserva es simulada — Versión 1 académica.
+              Solicitud de prueba sin pago real. Se aplica una tarifa de servicio del 5 % al importe mostrado en el resumen.
             </p>
 
             <div className="exp-detail__booking-guarantees">
@@ -257,14 +262,14 @@ export default function ExperienceDetail() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
-                Reserva segura y sin comisiones
+                Solicitud registrada con estado pendiente
               </div>
               <div className="exp-detail__guarantee">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                   <circle cx="9" cy="7" r="4"/>
                 </svg>
-                Guías locales certificados
+                Información de la experiencia disponible en esta página
               </div>
             </div>
           </div>

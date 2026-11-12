@@ -72,12 +72,10 @@ export default function AccommodationCard({ accommodation }) {
 
         <div className="acc-card__footer">
           <div className="acc-card__rating">
-            <StarRating rating={rating} />
-            <span className="acc-card__rating-num">{rating}</span>
-            <span className="acc-card__reviews">({reviews})</span>
+            {Number(rating) > 0 && Number(reviews) > 0 ? <><StarRating rating={rating} /><span className="acc-card__rating-num">{rating}</span><span className="acc-card__reviews">({reviews}, ejemplo)</span></> : <span className="acc-card__reviews">Sin valoraciones</span>}
           </div>
           <div className="acc-card__price">
-            <span className="acc-card__price-from">Por noche</span>
+            <span className="acc-card__price-from">Por persona / noche</span>
             <span className="acc-card__price-val">S/ {price}</span>
           </div>
         </div>

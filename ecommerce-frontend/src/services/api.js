@@ -2,6 +2,24 @@
 // Cliente HTTP centralizado para la API REST de Apurímac Turismo
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const API_ORIGIN = new URL(API_BASE, window.location.origin).origin;
+
+// La base de datos guarda rutas portables; el navegador necesita la dirección del servidor.
+function mapImages(value, toPublic) {
+  if (Array.isArray(value)) return value.map(item => mapImages(item, toPublic));
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+    const mapUrl = url => {
+      if (typeof url !== 'string') return url;
+      if (toPublic && url.startsWith('/uploads/')) return `${API_ORIGIN}${url}`;
+      if (!toPublic && url.startsWith(`${API_ORIGIN}/uploads/`)) return url.slice(API_ORIGIN.length);
+      return url;
+    };
+    if (key === 'image') return [key, mapUrl(item)];
+    if (key === 'gallery' && Array.isArray(item)) return [key, item.map(mapUrl)];
+    return [key, mapImages(item, toPublic)];
+  }));
+}
 
 /**
  * Obtiene el token JWT guardado en localStorage
@@ -29,6 +47,9 @@ async function request(endpoint, options = {}) {
     ...options,
     headers,
   };
+  if (typeof config.body === 'string' && headers['Content-Type'] === 'application/json') {
+    config.body = JSON.stringify(mapImages(JSON.parse(config.body), false));
+  }
 
   const res = await fetch(url, config);
   const data = await res.json().catch(() => ({}));
@@ -41,7 +62,18 @@ async function request(endpoint, options = {}) {
     throw error;
   }
 
-  return data;
+  return mapImages(data, true);
+}
+
+export async function uploadImage(blob) {
+  const res = await fetch(`${API_BASE}/admin/images`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'image/webp', Authorization: `Bearer ${getToken()}` },
+    body: blob,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'No se pudo subir la imagen.');
+  return `${API_ORIGIN}${data.data.url}`;
 }
 
 // ── SERVICIOS DE AUTENTICACIÓN ──────────────────────────────

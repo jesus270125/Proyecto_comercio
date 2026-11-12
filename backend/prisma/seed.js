@@ -13,10 +13,11 @@ async function main() {
 
   // ── 1. Usuario Admin ─────────────────────────────────────
   const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@apurimac.pe';
-  const adminPass  = process.env.ADMIN_SEED_PASSWORD || 'Admin2024!';
+  const adminPass  = process.env.ADMIN_SEED_PASSWORD;
 
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existingAdmin) {
+    if (!adminPass || adminPass.length < 12) throw new Error('Configura ADMIN_SEED_PASSWORD con al menos 12 caracteres antes de crear el administrador.');
     const hash = await bcrypt.hash(adminPass, 12);
     await prisma.user.create({
       data: {

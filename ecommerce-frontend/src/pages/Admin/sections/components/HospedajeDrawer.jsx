@@ -1,5 +1,8 @@
 import { createPortal } from 'react-dom';
+import { useState } from 'react';
+import ImagenesEditor from './ImagenesEditor';
 import { X, Check, Plus } from 'lucide-react';
+import DetallesAdicionales from './DetallesAdicionales';
 
 export default function HospedajeDrawer({
   modalOpen,
@@ -10,15 +13,16 @@ export default function HospedajeDrawer({
   handleSubmit,
   saving,
 }) {
+  const [uploading, setUploading] = useState(false);
   if (!modalOpen) return null;
 
   return createPortal(
     <>
-      <div className="admin-drawer-backdrop" onClick={() => setModalOpen(false)} />
+      <div className="admin-drawer-backdrop" onClick={() => { if (!uploading) setModalOpen(false); }} />
 
       <form
         className="admin-drawer"
-        onSubmit={handleSubmit}
+        onSubmit={event => { if (uploading) event.preventDefault(); else handleSubmit(event); }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hosp-drawer-title"
@@ -36,7 +40,7 @@ export default function HospedajeDrawer({
               <p>{editingId ? 'Modifica los datos en MySQL' : 'Agrega un hospedaje al catálogo'}</p>
             </div>
           </div>
-          <button className="admin-drawer__close" type="button" onClick={() => setModalOpen(false)} title="Cerrar panel">
+          <button className="admin-drawer__close" type="button" disabled={uploading} onClick={() => setModalOpen(false)} title="Cerrar panel">
             <X size={18} />
           </button>
         </div>
@@ -122,35 +126,15 @@ export default function HospedajeDrawer({
             />
           </div>
 
-          <div className="admin-drawer__section">
-            <span className="admin-drawer__section-label">Imagen</span>
-            <div className="admin-drawer__section-line" />
-          </div>
-
-          <div className="admin-drawer__field">
-            <label className="admin-drawer__label">URL de la Imagen<span>*</span></label>
-            <input
-              type="url"
-              className="form-input"
-              required
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
-              placeholder="https://images.unsplash.com/photo-..."
-            />
-            {form.image && (
-              <div className="admin-drawer__img-preview">
-                <img src={form.image} alt="Vista previa" onError={(e) => { e.target.style.display = 'none'; }} />
-                <div className="admin-drawer__img-preview-label">VISTA PREVIA</div>
-              </div>
-            )}
-          </div>
+          <DetallesAdicionales form={form} setForm={setForm} tipo="hospedaje" />
+          <ImagenesEditor form={form} setForm={setForm} onUploading={setUploading} />
         </div>
 
         <div className="admin-drawer__footer">
-          <button type="button" className="btn-cancel" onClick={() => setModalOpen(false)}>
+          <button type="button" className="btn-cancel" disabled={uploading} onClick={() => setModalOpen(false)}>
             Cancelar
           </button>
-          <button type="submit" className="btn-save" disabled={saving}>
+          <button type="submit" className="btn-save" disabled={saving || uploading}>
             {saving ? (
               <>
                 <div className="admin-save-spinner" /> Guardando…

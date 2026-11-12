@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authStore';
 import './LoginModal.css';
 
 export default function LoginModal({ isOpen, onClose }) {
@@ -26,10 +26,8 @@ export default function LoginModal({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setForm({ email: '', password: '' });
-      setError('');
-      setLoading(false);
-      setTimeout(() => emailRef.current?.focus(), 80);
+      const timer = setTimeout(() => emailRef.current?.focus(), 80);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
