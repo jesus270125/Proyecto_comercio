@@ -36,6 +36,11 @@ async function main() {
     console.log(`⏭️  Admin ya existe: ${adminEmail}`);
   }
 
+  if (process.env.SEED_ADMIN_ONLY === 'true') {
+    console.log('✨ Administrador preparado.');
+    return;
+  }
+
   // ── 2. Destinos ───────────────────────────────────────────
   const destinos = [
     {
