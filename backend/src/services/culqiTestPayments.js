@@ -25,7 +25,8 @@ async function culqiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const code = typeof data.code === 'string' && /^[a-z0-9_-]{1,64}$/i.test(data.code) ? data.code : 'sin_codigo';
-    console.warn('[culqi-test] La pasarela rechazó la solicitud:', response.status, code);
+    const reason = typeof data.merchant_message === 'string' ? data.merchant_message.replace(/(?:pk|sk)_(?:test|live)_[A-Za-z0-9_-]+/g, '[clave]').slice(0, 200) : '';
+    console.warn('[culqi-test] La pasarela rechazó la solicitud:', response.status, code, reason);
     throw Object.assign(new Error('Culqi no pudo procesar la orden de prueba.'), { status: 502 });
   }
   return data;
