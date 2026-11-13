@@ -15,8 +15,11 @@ async function main() {
   const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@apurimac.pe';
   const adminPass  = process.env.ADMIN_SEED_PASSWORD;
 
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!existingAdmin) {
+  const catalogOnly = process.env.SEED_CATALOG_ONLY === 'true';
+  const existingAdmin = catalogOnly ? null : await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (catalogOnly) {
+    console.log('⏭️  Solo se cargarán datos de catálogo de demostración.');
+  } else if (!existingAdmin) {
     if (!adminPass || adminPass.length < 12) throw new Error('Configura ADMIN_SEED_PASSWORD con al menos 12 caracteres antes de crear el administrador.');
     const hash = await bcrypt.hash(adminPass, 12);
     await prisma.user.create({
@@ -337,6 +340,11 @@ async function main() {
   }
   console.log(`✅ ${hospedajes.length} hospedajes creados/verificados`);
 
+  if (catalogOnly) {
+    console.log('✨ Catálogo de demostración preparado.');
+    return;
+  }
+
   // ── 5. Reservas de ejemplo ─────────────────────────────────
   const expChoq = await prisma.experience.findUnique({ where: { slug: 'choquequirao-trek' } });
   const accLodge = await prisma.accommodation.findUnique({ where: { slug: 'lodge-choquequirao' } });
@@ -373,7 +381,7 @@ async function main() {
   }
 
   console.log('\n✨ Seed completado exitosamente.\n');
-  console.log(`  Admin: ${adminEmail} / ${adminPass}`);
+  console.log(`  Admin: ${adminEmail}`);
   console.log('  (Cambia esta contraseña en producción)\n');
 }
 
