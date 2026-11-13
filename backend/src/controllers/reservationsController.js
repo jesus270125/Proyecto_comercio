@@ -172,7 +172,8 @@ async function adminList(req, res, next) {
       total: parseFloat(r.total),
       estado: r.estado.toLowerCase(),
       estadoPago: r.estadoPago,
-      pagoPrueba: r.testPayment,
+      pagoPrueba: r.testPayment && r.testPayment.status !== 'PAGADA_PRUEBA' && r.testPayment.expiresAt < new Date()
+        ? { ...r.testPayment, status: 'VENCIDA' } : r.testPayment,
       createdAt: r.createdAt,
     }));
 

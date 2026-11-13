@@ -5,7 +5,19 @@ export default function CulqiTestPayment({ payment, form }) {
   const [status, setStatus] = useState('PENDIENTE');
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
+  const [orderGenerated, setOrderGenerated] = useState(false);
   const checkout = useRef(null);
+
+  useEffect(() => {
+    if (orderGenerated) return undefined;
+    const remaining = new Date(payment.expiresAt).getTime() - Date.now();
+    if (remaining <= 0) {
+      const timer = setTimeout(() => setStatus('VENCIDA'), 0);
+      return () => clearTimeout(timer);
+    }
+    const timer = setTimeout(() => setStatus('VENCIDA'), remaining);
+    return () => clearTimeout(timer);
+  }, [orderGenerated, payment.expiresAt]);
 
   useEffect(() => {
     let active = true;
@@ -14,10 +26,11 @@ export default function CulqiTestPayment({ payment, form }) {
     script.onload = () => { if (active) setReady(true); };
     script.onerror = () => { if (active) setError('No se pudo cargar Culqi. Intenta recargar la página.'); };
     document.body.appendChild(script);
-    return () => { active = false; script.remove(); };
+    return () => { active = false; checkout.current?.close(); script.remove(); };
   }, []);
 
   useEffect(() => {
+    if (!orderGenerated) return undefined;
     let active = true;
     let timer;
     async function check() {
@@ -31,7 +44,7 @@ export default function CulqiTestPayment({ payment, form }) {
     }
     check();
     return () => { active = false; clearTimeout(timer); };
-  }, [payment.accessToken]);
+  }, [payment.accessToken, orderGenerated]);
 
   function openCheckout() {
     if (!window.CulqiCheckout) { setError('Culqi aún no está disponible. Inténtalo otra vez.'); return; }
@@ -42,7 +55,7 @@ export default function CulqiTestPayment({ payment, form }) {
       options: { lang: 'es', modal: true, installments: false, paymentMethods: methods, paymentMethodsSort: ['billetera'] },
     });
     instance.culqi = () => {
-      if (instance.order) { setError(''); }
+      if (instance.order) { setOrderGenerated(true); setError(''); }
       else if (instance.error) setError('No se completó la prueba de pago. Inténtalo nuevamente.');
     };
     checkout.current = instance;
