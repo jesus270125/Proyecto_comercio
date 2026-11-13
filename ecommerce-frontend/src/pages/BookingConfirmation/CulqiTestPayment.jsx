@@ -42,7 +42,7 @@ export default function CulqiTestPayment({ payment, form }) {
       options: { lang: 'es', modal: true, installments: false, paymentMethods: methods, paymentMethodsSort: ['billetera'] },
     });
     instance.culqi = () => {
-      if (instance.order) { instance.close(); setError(''); }
+      if (instance.order) { setError(''); }
       else if (instance.error) setError('No se completó la prueba de pago. Inténtalo nuevamente.');
     };
     checkout.current = instance;
