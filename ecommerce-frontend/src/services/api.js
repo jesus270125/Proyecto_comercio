@@ -1,7 +1,7 @@
 // src/services/api.js
 // Cliente HTTP centralizado para la API REST de Apurímac Turismo
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+export const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
 const API_ORIGIN = new URL(API_BASE, window.location.origin).origin;
 
 // La base de datos guarda rutas portables; el navegador necesita la dirección del servidor.
@@ -130,6 +130,9 @@ export const accommodationsService = {
 };
 
 export const reservationsService = {
+  async getPaymentDemo() {
+    return await request('/payment-demo');
+  },
   async create(reservationData) {
     return await request('/reservations', {
       method: 'POST',

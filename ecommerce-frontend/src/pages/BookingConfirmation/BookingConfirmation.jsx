@@ -19,7 +19,7 @@ export default function BookingConfirmation() {
     );
   }
 
-  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas } = state;
+  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas, pagoSimulado } = state;
 
   return (
     <div className="confirmation-page">
@@ -39,7 +39,7 @@ export default function BookingConfirmation() {
             ¡Gracias, {form.nombre}!
           </h1>
           <p className="confirmation-subtitle">
-            Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.
+            {pagoSimulado ? 'Tu solicitud quedó pendiente y se registró un pago simulado. No se realizó ningún cobro real.' : 'Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.'}
           </p>
 
           {/* Reservation ID */}
@@ -125,6 +125,7 @@ export default function BookingConfirmation() {
               <strong>Total</strong>
               <strong>S/ {total.toFixed(2)}</strong>
             </div>
+            {pagoSimulado && <div className="confirmation-pricing__row"><span>Adelanto simulado</span><span>S/ {serviceFee.toFixed(2)}</span></div>}
           </div>
 
           {/* Disclaimer */}

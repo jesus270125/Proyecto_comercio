@@ -50,6 +50,8 @@ export default function BookingSummary({ tipo, nombre, form, nights, precio, sub
             <strong>Total estimado</strong>
             <strong className="booking-summary__total-val">S/ {total.toFixed(2)}</strong>
           </div>
+          <div className="booking-summary__row"><span>Adelanto de referencia (tarifa de servicio)</span><span>S/ {serviceFee.toFixed(2)}</span></div>
+          <div className="booking-summary__row"><span>Saldo de referencia</span><span>S/ {subtotal.toFixed(2)}</span></div>
         </div> : <p>Selecciona las fechas para calcular el importe.</p>}
 
         <div className="booking-summary__note">

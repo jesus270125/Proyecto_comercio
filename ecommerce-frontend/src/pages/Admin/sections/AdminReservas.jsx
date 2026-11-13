@@ -235,6 +235,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                   </div>
                 )}
                 <div style={{ paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border)' }}>
+                  <div>Pago: <strong>{selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total</span>
                     <strong style={{ color: 'var(--primary)', fontSize: 'var(--text-base)' }}>S/ {Number(selected.total || 0).toLocaleString('es-PE')}</strong>

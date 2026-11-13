@@ -16,6 +16,12 @@ const integer = value => (typeof value === 'number' || typeof value === 'string'
 const priceIsValid = value => (typeof value === 'number' || typeof value === 'string' && /^\d+(\.\d{1,2})?$/.test(value)) && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 99999999.99 && Math.abs(Number(value) * 100 - Math.round(Number(value) * 100)) < 1e-7;
 const stringArray = value => Array.isArray(value) && value.length <= 100 && value.every(item => text(item, 500));
 const bodyObject = value => value && typeof value === 'object' && !Array.isArray(value) && !Buffer.isBuffer(value);
+const containsMarkup = value => {
+  if (typeof value === 'string') return /<\s*\/?\s*[a-zA-Z][^>]*>|<\s*!\s*(?:--|doctype)/i.test(value);
+  if (Array.isArray(value)) return value.some(containsMarkup);
+  if (bodyObject(value)) return Object.values(value).some(containsMarkup);
+  return false;
+};
 const validDate = value => {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -33,6 +39,7 @@ function validateReservation(req, res, next) {
   if (!bodyObject(req.body)) return res.status(400).json({ error: 'Datos de reserva inválidos.' });
   const { guestNombre, guestApellido, guestEmail, guestTelefono, observaciones, tipo, experienceId, accommodationId, fechaLlegada, fechaSalida, personas } = req.body;
   const errors = [];
+  if (req.body.pagoSimulado !== undefined && typeof req.body.pagoSimulado !== 'boolean') errors.push('Opción de pago inválida.');
   if (!text(guestNombre, 100)) errors.push('Nombre inválido.');
   if (!text(guestApellido, 100)) errors.push('Apellido inválido.');
   if (!text(guestEmail, 255) || !emailPattern.test(guestEmail)) errors.push('Email de contacto inválido.');
@@ -73,6 +80,7 @@ function validateResource(type, partial = false) {
     const schema = schemas[type];
     const allowed = new Set([...Object.keys(schema.strings), ...schema.arrays, ...schema.extra, ...(type === 'destination' ? [] : ['price'])]);
     const errors = [];
+    if (type === 'experience' && containsMarkup(req.body)) errors.push('La experiencia no puede contener etiquetas HTML ni código.');
     for (const key of Object.keys(req.body)) if (!allowed.has(key)) errors.push(`Campo no permitido: ${key}.`);
     for (const key of schema.required) if (!partial && req.body[key] === undefined) errors.push(`Falta ${key}.`);
     for (const [key, max] of Object.entries(schema.strings)) {

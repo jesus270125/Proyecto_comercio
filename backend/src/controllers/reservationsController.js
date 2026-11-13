@@ -2,6 +2,7 @@
 // Toda la lógica de precios se calcula en el servidor — NO se confía en el cliente
 
 const prisma = require('../config/database');
+const { calculateReservationPricing } = require('../services/reservationPricing');
 
 /** Genera un código único tipo APU-XXXXXXXX */
 function generateCode() {
@@ -22,6 +23,10 @@ async function create(req, res, next) {
       observaciones, tipo, experienceId, accommodationId,
       fechaLlegada, fechaSalida, personas,
     } = req.body;
+
+    if (req.body.pagoSimulado && !(process.env.NODE_ENV === 'development' && process.env.PAYMENT_DEMO_ENABLED === 'true')) {
+      return res.status(403).json({ error: 'La simulación de pago no está habilitada.' });
+    }
 
     const p = parseInt(personas);
     const llegada = new Date(fechaLlegada);
@@ -51,12 +56,9 @@ async function create(req, res, next) {
     }
 
     // Calcular importes en el servidor
-    const subtotal = tipo === 'HOSPEDAJE'
-      ? precioUnitario * p * noches
-      : precioUnitario * p;
-
-    const serviceFee = Math.round(subtotal * 0.05 * 100) / 100;
-    const total = Math.round((subtotal + serviceFee) * 100) / 100;
+    const { subtotal, serviceFee, total } = calculateReservationPricing(
+      precioUnitario, p, tipo === 'HOSPEDAJE' ? noches : 1,
+    );
 
     // Generar código único (reintento en caso de colisión)
     let codigo;
@@ -85,6 +87,7 @@ async function create(req, res, next) {
         subtotal,
         serviceFee,
         total,
+        estadoPago: req.body.pagoSimulado ? 'SIMULADO' : 'SIN_PAGO',
         userId: req.user?.id || null,
       },
     });
@@ -98,6 +101,7 @@ async function create(req, res, next) {
         serviceFee: reservation.serviceFee,
         total: reservation.total,
         estado: reservation.estado,
+        estadoPago: reservation.estadoPago,
       },
     });
   } catch (err) { next(err); }
@@ -148,6 +152,7 @@ async function adminList(req, res, next) {
       serviceFee: parseFloat(r.serviceFee),
       total: parseFloat(r.total),
       estado: r.estado.toLowerCase(),
+      estadoPago: r.estadoPago,
       createdAt: r.createdAt,
     }));
 

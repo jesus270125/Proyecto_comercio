@@ -32,3 +32,11 @@ test('crear y editar validan precios y campos permitidos', () => {
   assert.equal(run(validateResource('experience', true), { reservations: { deleteMany: {} } }).status, 400);
   assert.equal(run(validateResource('destination', true), { nombre: 123 }).status, 400);
 });
+
+test('las experiencias rechazan etiquetas HTML al crear o editar, incluso en listas e itinerarios', () => {
+  const experience = { nombre: 'Ruta', shortDescription: 'Resumen', description: 'Descripción', category: 'Aventura', location: 'Abancay', duration: '1 día', price: 15, image: '/uploads/foto.webp' };
+  assert.equal(run(validateResource('experience'), { ...experience, nombre: 'Ruta </script>' }).status, 400);
+  assert.equal(run(validateResource('experience', true), { includes: ['<script>alert(1)</script>'] }).status, 400);
+  assert.equal(run(validateResource('experience', true), { itinerary: [{ day: 1, title: 'Ruta', description: '<img src=x>' }] }).status, 400);
+  assert.equal(run(validateResource('experience', true), { description: 'Grupos de 2 < 5 personas' }).nextCalled, true);
+});

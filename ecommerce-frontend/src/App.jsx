@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
+import BackendStatus from './components/BackendStatus/BackendStatus';
 import Home from './pages/Home/Home';
 import Experiences from './pages/Experiences/Experiences';
 import ExperienceDetail from './pages/ExperienceDetail/ExperienceDetail';
@@ -70,6 +71,7 @@ function NotFound() {
 function App() {
   return (
     <BrowserRouter>
+      <BackendStatus />
       <AppRoutes />
     </BrowserRouter>
   );

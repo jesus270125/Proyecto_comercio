@@ -13,6 +13,16 @@ export default function Booking() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [itemResult, setItemResult] = useState(null);
+  const [demoEnabled, setDemoEnabled] = useState(false);
+  const [paymentStep, setPaymentStep] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    reservationsService.getPaymentDemo().then(result => {
+      if (active) setDemoEnabled(result.enabled === true);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   const tipo   = searchParams.get('tipo') || 'experiencia';
   const itemId = searchParams.get('id');
@@ -45,6 +55,7 @@ export default function Booking() {
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
+    setPaymentStep(false);
     if (errors[name]) setErrors(e => { const n = {...e}; delete n[name]; return n; });
   };
 
@@ -54,6 +65,10 @@ export default function Booking() {
     const errs = validateForm(form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      return;
+    }
+    if (demoEnabled && !paymentStep) {
+      setPaymentStep(true);
       return;
     }
     setSubmitting(true);
@@ -72,6 +87,7 @@ export default function Booking() {
         fechaLlegada: form.llegada,
         fechaSalida: form.salida,
         personas: parseInt(form.personas, 10) || 1,
+        pagoSimulado: demoEnabled,
       };
 
       const res = await reservationsService.create(payload);
@@ -89,7 +105,8 @@ export default function Booking() {
           serviceFee: Number(res.data.serviceFee),
           total: Number(res.data.total),
           nights: isHospedaje ? nights : null,
-          personas: Number(form.personas)
+          personas: Number(form.personas),
+          pagoSimulado: res.data.estadoPago === 'SIMULADO',
         }
       });
     } catch (err) {
@@ -106,7 +123,7 @@ export default function Booking() {
           <span className="section-label">Formulario de reserva</span>
           <h1 className="booking-title">Registra tu solicitud</h1>
           <p className="booking-subtitle">
-            Completa los datos. La reserva es simulada — sin pago real en esta versión.
+            {demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
           </p>
         </div>
 
@@ -261,6 +278,14 @@ export default function Booking() {
             </section>
 
             <div className="booking-actions">
+              {demoEnabled && paymentStep && (
+                <div role="status" style={{ padding: '1rem', marginBottom: '1rem', background: '#fff8e1', borderRadius: '0.5rem' }}>
+                  <strong>Simulación de pago</strong>
+                  <p>Adelanto de prueba: S/ {serviceFee.toFixed(2)}. Saldo de referencia: S/ {subtotal.toFixed(2)}.</p>
+                  <p>No ingreses datos bancarios. Al continuar se registrará un pago simulado, sin cargo real.</p>
+                  <button type="button" onClick={() => setPaymentStep(false)}>Volver a revisar los datos</button>
+                </div>
+              )}
               <button
                 type="submit"
                 className="btn btn-primary btn-lg booking-submit"
@@ -274,7 +299,7 @@ export default function Booking() {
                   </>
                 ) : (
                   <>
-                    Registrar solicitud
+                    {demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                     </svg>

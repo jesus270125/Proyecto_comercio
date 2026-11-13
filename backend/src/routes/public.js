@@ -21,6 +21,7 @@ router.get('/accommodations',        acc.list);
 router.get('/accommodations/:slug',  acc.detail);
 
 // Reservas (invitados pueden reservar)
+router.get('/payment-demo', (req, res) => res.json({ enabled: process.env.NODE_ENV === 'development' && process.env.PAYMENT_DEMO_ENABLED === 'true' }));
 router.post('/reservations', optionalAuth, validateReservation, res_.create);
 
 module.exports = router;

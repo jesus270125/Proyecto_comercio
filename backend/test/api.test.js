@@ -57,3 +57,21 @@ test('el estado de reserva rechaza valores de tipos inesperados', async () => {
   const forbidden = await fetch(`${base}/admin/experiences`, { headers: { Authorization: `Bearer ${userToken}` } });
   assert.equal(forbidden.status, 403);
 });
+
+test('la simulación requiere habilitación explícita y nunca está disponible en producción', async () => {
+  const oldEnv = process.env.NODE_ENV;
+  const oldEnabled = process.env.PAYMENT_DEMO_ENABLED;
+  try {
+    process.env.NODE_ENV = 'development';
+    process.env.PAYMENT_DEMO_ENABLED = 'true';
+    assert.equal((await (await fetch(`${base}/payment-demo`)).json()).enabled, true);
+    process.env.NODE_ENV = 'production';
+    assert.equal((await (await fetch(`${base}/payment-demo`)).json()).enabled, false);
+    const valid = { guestNombre: 'Ana', guestApellido: 'Pérez', guestEmail: 'ana@example.com', guestTelefono: '999123456', tipo: 'EXPERIENCIA', experienceId: 1, fechaLlegada: '2027-02-01', fechaSalida: '2027-02-02', personas: 1, pagoSimulado: true };
+    const response = await fetch(`${base}/reservations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(valid) });
+    assert.equal(response.status, 403);
+  } finally {
+    if (oldEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = oldEnv;
+    if (oldEnabled === undefined) delete process.env.PAYMENT_DEMO_ENABLED; else process.env.PAYMENT_DEMO_ENABLED = oldEnabled;
+  }
+});
