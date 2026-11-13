@@ -133,6 +133,12 @@ export const reservationsService = {
   async getPaymentDemo() {
     return await request('/payment-demo');
   },
+  async getPaymentTest() {
+    return await request('/payment-test');
+  },
+  async getTestPaymentStatus(token) {
+    return await request('/payment-test/status', { headers: { 'X-Payment-Token': token } });
+  },
   async create(reservationData) {
     return await request('/reservations', {
       method: 'POST',

@@ -3,6 +3,9 @@
 
 const prisma = require('../config/database');
 const { calculateReservationPricing } = require('../services/reservationPricing');
+const { getCulqiTestConfig } = require('../services/culqiConfig');
+const { hashToken, createOrder } = require('../services/culqiTestPayments');
+const crypto = require('node:crypto');
 
 /** Genera un código único tipo APU-XXXXXXXX */
 function generateCode() {
@@ -56,9 +59,14 @@ async function create(req, res, next) {
     }
 
     // Calcular importes en el servidor
-    const { subtotal, serviceFee, total } = calculateReservationPricing(
+    const { subtotal, serviceFee, total, depositCents } = calculateReservationPricing(
       precioUnitario, p, tipo === 'HOSPEDAJE' ? noches : 1,
     );
+    const testConfig = getCulqiTestConfig();
+    if (testConfig && (depositCents < 600 || depositCents > 50000)) {
+      return res.status(400).json({ error: 'La prueba con billetera requiere una tarifa entre S/ 6 y S/ 500.' });
+    }
+    const paymentToken = testConfig ? crypto.randomBytes(32).toString('hex') : null;
 
     // Generar código único (reintento en caso de colisión)
     let codigo;
@@ -89,8 +97,17 @@ async function create(req, res, next) {
         total,
         estadoPago: req.body.pagoSimulado ? 'SIMULADO' : 'SIN_PAGO',
         userId: req.user?.id || null,
+        ...(testConfig ? { testPayment: { create: { accessHash: hashToken(paymentToken), amountCents: depositCents, expiresAt: new Date(Date.now() + 30 * 60 * 1000) } } } : {}),
       },
     });
+
+    let testPayment = null;
+    if (testConfig) {
+      try { testPayment = await createOrder(reservation, paymentToken); }
+      catch {
+        return res.status(502).json({ error: `No se pudo iniciar el pago de prueba. La solicitud ${reservation.codigo} quedó pendiente; contacta al administrador antes de intentar nuevamente.` });
+      }
+    }
 
     res.status(201).json({
       data: {
@@ -102,6 +119,7 @@ async function create(req, res, next) {
         total: reservation.total,
         estado: reservation.estado,
         estadoPago: reservation.estadoPago,
+        testPayment,
       },
     });
   } catch (err) { next(err); }
@@ -129,6 +147,7 @@ async function adminList(req, res, next) {
       include: {
         experience: { select: { nombre: true } },
         accommodation: { select: { nombre: true } },
+        testPayment: { select: { status: true, amountCents: true, expiresAt: true } },
       },
     });
 
@@ -153,6 +172,7 @@ async function adminList(req, res, next) {
       total: parseFloat(r.total),
       estado: r.estado.toLowerCase(),
       estadoPago: r.estadoPago,
+      pagoPrueba: r.testPayment,
       createdAt: r.createdAt,
     }));
 

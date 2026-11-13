@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import './BookingConfirmation.css';
+import CulqiTestPayment from './CulqiTestPayment';
 
 export default function BookingConfirmation() {
   const { state } = useLocation();
@@ -19,7 +20,7 @@ export default function BookingConfirmation() {
     );
   }
 
-  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas, pagoSimulado } = state;
+  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas, pagoSimulado, testPayment } = state;
 
   return (
     <div className="confirmation-page">
@@ -39,7 +40,7 @@ export default function BookingConfirmation() {
             ¡Gracias, {form.nombre}!
           </h1>
           <p className="confirmation-subtitle">
-            {pagoSimulado ? 'Tu solicitud quedó pendiente y se registró un pago simulado. No se realizó ningún cobro real.' : 'Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.'}
+            {testPayment ? 'Tu solicitud está pendiente. Completa el pago de prueba de la tarifa para ensayar el proceso.' : pagoSimulado ? 'Tu solicitud quedó pendiente y se registró un pago simulado. No se realizó ningún cobro real.' : 'Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.'}
           </p>
 
           {/* Reservation ID */}
@@ -129,7 +130,7 @@ export default function BookingConfirmation() {
           </div>
 
           {/* Disclaimer */}
-          <div className="confirmation-disclaimer">
+          {testPayment ? <CulqiTestPayment payment={testPayment} form={form} /> : <div className="confirmation-disclaimer">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="8" x2="12" y2="12"/>
@@ -139,7 +140,7 @@ export default function BookingConfirmation() {
               Esta solicitud de prueba se guarda en la base de datos con estado pendiente.
               No se ha realizado ningún pago ni se ha enviado un correo.
             </p>
-          </div>
+          </div>}
 
           {/* Actions */}
           <div className="confirmation-actions">

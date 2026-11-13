@@ -15,11 +15,15 @@ export default function Booking() {
   const [itemResult, setItemResult] = useState(null);
   const [demoEnabled, setDemoEnabled] = useState(false);
   const [paymentStep, setPaymentStep] = useState(false);
+  const [culqiTest, setCulqiTest] = useState(false);
 
   useEffect(() => {
     let active = true;
     reservationsService.getPaymentDemo().then(result => {
       if (active) setDemoEnabled(result.enabled === true);
+    }).catch(() => {});
+    reservationsService.getPaymentTest().then(result => {
+      if (active) setCulqiTest(result.enabled === true);
     }).catch(() => {});
     return () => { active = false; };
   }, []);
@@ -87,7 +91,7 @@ export default function Booking() {
         fechaLlegada: form.llegada,
         fechaSalida: form.salida,
         personas: parseInt(form.personas, 10) || 1,
-        pagoSimulado: demoEnabled,
+        pagoSimulado: demoEnabled && !culqiTest,
       };
 
       const res = await reservationsService.create(payload);
@@ -107,6 +111,7 @@ export default function Booking() {
           nights: isHospedaje ? nights : null,
           personas: Number(form.personas),
           pagoSimulado: res.data.estadoPago === 'SIMULADO',
+          testPayment: res.data.testPayment,
         }
       });
     } catch (err) {
@@ -123,7 +128,7 @@ export default function Booking() {
           <span className="section-label">Formulario de reserva</span>
           <h1 className="booking-title">Registra tu solicitud</h1>
           <p className="booking-subtitle">
-            {demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
+            {culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
           </p>
         </div>
 
@@ -299,7 +304,7 @@ export default function Booking() {
                   </>
                 ) : (
                   <>
-                    {demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
+                    {culqiTest ? 'Continuar al pago de prueba' : demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                     </svg>
@@ -307,7 +312,7 @@ export default function Booking() {
                 )}
               </button>
               <p className="booking-legal">
-                Se registrará una solicitud de prueba. No se realizará ningún cargo real.
+                {culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.'}
               </p>
             </div>
           </form>

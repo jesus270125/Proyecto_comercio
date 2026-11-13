@@ -140,6 +140,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                     <th>Servicio</th>
                     <th>Fechas</th>
                     <th>Total</th>
+                    <th>Pago</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                   </tr>
@@ -165,6 +166,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                         <div>→ {r.salida}</div>
                       </td>
                       <td style={{ fontWeight: 700, color: 'var(--primary)' }}>S/ {Number(r.total || 0).toLocaleString('es-PE')}</td>
+                      <td>{r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
                       <td>
                         <span className={`status-badge status-${r.estado || 'pendiente'}`}>
                           {r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Pendiente'}
@@ -235,7 +237,8 @@ export default function AdminReservas({ reservas, setReservas }) {
                   </div>
                 )}
                 <div style={{ paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border)' }}>
-                  <div>Pago: <strong>{selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
+                  <div>Pago: <strong>{selected.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Prueba pagada — sin cobro real' : selected.pagoPrueba?.status === 'VENCIDA' ? 'Prueba vencida' : selected.pagoPrueba ? 'Pago de prueba pendiente' : selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
+                  {selected.pagoPrueba && <div>Tarifa de prueba: S/ {(selected.pagoPrueba.amountCents / 100).toFixed(2)}</div>}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total</span>
                     <strong style={{ color: 'var(--primary)', fontSize: 'var(--text-base)' }}>S/ {Number(selected.total || 0).toLocaleString('es-PE')}</strong>

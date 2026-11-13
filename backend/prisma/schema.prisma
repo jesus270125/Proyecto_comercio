@@ -172,6 +172,7 @@ model Reservation {
 
   experience      Experience?        @relation(fields: [experienceId], references: [id], onDelete: SetNull)
   accommodation   Accommodation?     @relation(fields: [accommodationId], references: [id], onDelete: SetNull)
+  testPayment     TestPayment?
 
   @@index([codigo])
   @@index([estado])
@@ -195,4 +196,20 @@ enum ReservationStatus {
 enum PaymentStatus {
   SIN_PAGO
   SIMULADO
+}
+
+// Solo pagos de prueba de Culqi. Nunca representa dinero real.
+model TestPayment {
+  id            Int         @id @default(autoincrement())
+  reservationId Int         @unique @map("reservation_id")
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  accessHash    String      @unique @map("access_hash") @db.VarChar(64)
+  providerId    String?     @unique @map("provider_id") @db.VarChar(100)
+  amountCents   Int         @map("amount_cents")
+  status        String      @default("CREANDO") @db.VarChar(24)
+  expiresAt     DateTime    @map("expires_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@map("test_payments")
 }
