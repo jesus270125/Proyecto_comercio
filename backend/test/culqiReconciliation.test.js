@@ -6,13 +6,33 @@ let current;
 let writes = 0;
 require.cache[databasePath] = { id: databasePath, filename: databasePath, loaded: true, exports: {
   testPayment: {
+    async update({ data }) { current = { ...current, ...data }; return current; },
     async updateMany({ where, data }) {
       if (current.id === where.id && current.status !== 'PAGADA_PRUEBA') { current = { ...current, ...data }; writes++; }
     },
     async findUnique() { return current; },
   },
 } };
-const { reconcile } = require('../src/services/culqiTestPayments');
+const { createOrder, reconcile } = require('../src/services/culqiTestPayments');
+
+test('crea una orden de prueba sin confirmarla antes del checkout', async t => {
+  const names = ['CULQI_TEST_ENABLED', 'CULQI_TEST_PUBLIC_KEY', 'CULQI_TEST_SECRET_KEY'];
+  const old = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  t.after(() => names.forEach(name => old[name] === undefined ? delete process.env[name] : process.env[name] = old[name]));
+  Object.assign(process.env, { CULQI_TEST_ENABLED: 'true', CULQI_TEST_PUBLIC_KEY: 'pk_test_abc', CULQI_TEST_SECRET_KEY: 'sk_test_def' });
+  current = { id: 3, status: 'CREANDO', amountCents: 600, expiresAt: new Date(Date.now() + 1800000) };
+  let sent;
+  t.mock.method(global, 'fetch', async (_url, options) => {
+    sent = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ id: 'ord_test_abc' }) };
+  });
+  const reservation = { id: 4, codigo: 'APU-TEST', guestNombre: 'Ana', guestApellido: 'Perez', guestEmail: 'ana@example.com', guestTelefono: '999999999' };
+  const result = await createOrder(reservation, 'token-de-prueba');
+  assert.equal(sent.confirm, false);
+  assert.equal(sent.amount, 600);
+  assert.equal(result.orderId, 'ord_test_abc');
+  assert.equal(current.status, 'PENDIENTE');
+});
 
 test('verifica la orden con Culqi y no acepta datos manipulados', async t => {
   const previous = { ...process.env };

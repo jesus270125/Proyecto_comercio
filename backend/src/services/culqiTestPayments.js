@@ -31,7 +31,7 @@ async function createOrder(reservation, accessToken) {
   const payment = await prisma.testPayment.findUnique({ where: { reservationId: reservation.id } });
   if (!config || !payment || payment.status !== 'CREANDO') throw new Error('Pago de prueba no disponible.');
   const order = await culqiRequest('/orders', { method: 'POST', body: JSON.stringify({
-    amount: payment.amountCents, currency_code: 'PEN', description: `Tarifa de prueba ${reservation.codigo}`,
+    amount: payment.amountCents, currency_code: 'PEN', description: `Tarifa de prueba ${reservation.codigo}`, confirm: false,
     order_number: reservation.codigo,
     client_details: { first_name: reservation.guestNombre, last_name: reservation.guestApellido, email: reservation.guestEmail, phone_number: reservation.guestTelefono },
     expiration_date: Math.floor(payment.expiresAt.getTime() / 1000),
