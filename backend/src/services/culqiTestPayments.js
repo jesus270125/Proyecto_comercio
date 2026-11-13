@@ -6,6 +6,7 @@ const hashToken = token => crypto.createHash('sha256').update(token).digest('hex
 
 function verifiedStatus(order, payment, now = Date.now()) {
   if (order.id !== payment.providerId || Number(order.amount) !== payment.amountCents || order.currency_code !== 'PEN') {
+    console.warn('[culqi-test] No coincide la orden:', { id: order.id === payment.providerId, importe: Number(order.amount) === payment.amountCents, moneda: order.currency_code === 'PEN' });
     throw Object.assign(new Error('No se pudo verificar la orden de prueba.'), { status: 502 });
   }
   if (order.state === 'paid') return 'PAGADA_PRUEBA';
@@ -22,7 +23,11 @@ async function culqiRequest(path, options = {}) {
     signal: AbortSignal.timeout(15000),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw Object.assign(new Error('Culqi no pudo procesar la orden de prueba.'), { status: 502 });
+  if (!response.ok) {
+    const code = typeof data.code === 'string' && /^[a-z0-9_-]{1,64}$/i.test(data.code) ? data.code : 'sin_codigo';
+    console.warn('[culqi-test] La pasarela rechazó la solicitud:', response.status, code);
+    throw Object.assign(new Error('Culqi no pudo procesar la orden de prueba.'), { status: 502 });
+  }
   return data;
 }
 
