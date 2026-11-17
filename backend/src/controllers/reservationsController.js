@@ -7,6 +7,7 @@ const { getCulqiTestConfig } = require('../services/culqiConfig');
 const { hashToken, createOrder } = require('../services/culqiTestPayments');
 const crypto = require('node:crypto');
 const izipay = require('../services/izipaySandbox');
+const mercadoPago = require('../services/mercadoPagoTest');
 
 /** Genera un código único tipo APU-XXXXXXXX */
 function generateCode() {
@@ -65,13 +66,15 @@ async function create(req, res, next) {
     );
     const testConfig = getCulqiTestConfig();
     const iziConfig = izipay.config();
-    if (testConfig && iziConfig) return res.status(503).json({ error: 'Hay más de un proveedor de prueba habilitado.' });
+    const mpConfig = mercadoPago.config();
+    if ([testConfig, iziConfig, mpConfig].filter(Boolean).length > 1) return res.status(503).json({ error: 'Hay más de un proveedor de prueba habilitado.' });
+    if (mpConfig && depositCents <= 0) return res.status(400).json({ error: 'La tarifa debe ser mayor a cero.' });
     if (iziConfig && (!izipay.validBilling(req.body.izipayBilling) || guestNombre.trim().length < 2 || guestNombre.length > 50 || guestApellido.trim().length < 2 || guestApellido.length > 50 || guestEmail.length > 50 || !/^\d{7,15}$/.test(guestTelefono))) return res.status(400).json({ error: 'Revisa los datos de facturación para Izipay; el teléfono debe contener de 7 a 15 dígitos.' });
     if (iziConfig && depositCents <= 100) return res.status(400).json({ error: 'La tarifa debe ser mayor a S/ 1.00 para Izipay.' });
     if (testConfig && (depositCents < 600 || depositCents > 50000)) {
       return res.status(400).json({ error: 'La prueba con billetera requiere una tarifa entre S/ 6 y S/ 500.' });
     }
-    const paymentToken = (testConfig || iziConfig) ? crypto.randomBytes(32).toString('hex') : null;
+    const paymentToken = (testConfig || iziConfig || mpConfig) ? crypto.randomBytes(32).toString('hex') : null;
 
     // Generar código único (reintento en caso de colisión)
     let codigo;
@@ -104,11 +107,22 @@ async function create(req, res, next) {
         userId: req.user?.id || null,
         ...(testConfig ? { testPayment: { create: { accessHash: hashToken(paymentToken), amountCents: depositCents, expiresAt: new Date(Date.now() + 30 * 60 * 1000) } } } : {}),
         ...(iziConfig ? { izipayPayment: { create: { accessHash: hashToken(paymentToken), amountCents: depositCents } } } : {}),
+        ...(mpConfig ? { mercadoPagoTest: { create: { accessHash: hashToken(paymentToken), amountCents: depositCents } } } : {}),
       },
     });
 
     let testPayment = null;
     let izipayTest = null;
+    let mercadoPagoTest = null;
+    if (mpConfig) {
+      try {
+        const payment = await prisma.mercadoPagoTestPayment.findUnique({ where: { reservationId: reservation.id } });
+        const url = await mercadoPago.createOrder(reservation, payment);
+        mercadoPagoTest = { url, accessToken: paymentToken, amountCents: depositCents };
+      } catch {
+        return res.status(502).json({ error: `No se pudo iniciar el pago de prueba. La solicitud ${reservation.codigo} quedó pendiente; contacta al administrador antes de intentar nuevamente.` });
+      }
+    }
     if (iziConfig) {
       try {
         const payment = await prisma.izipayPayment.findUnique({ where: { reservationId: reservation.id } });
@@ -137,6 +151,7 @@ async function create(req, res, next) {
         estadoPago: reservation.estadoPago,
         testPayment,
         izipayTest,
+        mercadoPagoTest,
       },
     });
   } catch (err) { next(err); }
@@ -166,6 +181,7 @@ async function adminList(req, res, next) {
         accommodation: { select: { nombre: true } },
         testPayment: { select: { status: true, amountCents: true, expiresAt: true } },
         izipayPayment: { select: { status: true, amountCents: true } },
+        mercadoPagoTest: { select: { status: true, amountCents: true } },
       },
     });
 
@@ -194,6 +210,7 @@ async function adminList(req, res, next) {
       izipayReference: r.izipayReference,
       izipayPaidAt: r.izipayPaidAt,
       izipayTest: r.izipayPayment,
+      mercadoPagoTest: r.mercadoPagoTest,
       pagoPrueba: r.testPayment && r.testPayment.status !== 'PAGADA_PRUEBA' && r.testPayment.expiresAt < new Date()
         ? { ...r.testPayment, status: 'VENCIDA' } : r.testPayment,
       createdAt: r.createdAt,
@@ -254,6 +271,15 @@ async function adminRefreshIzipayTest(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function adminRefreshMercadoPagoTest(req, res, next) {
+  try {
+    const payment = await prisma.mercadoPagoTestPayment.findUnique({ where: { reservationId: Number(req.params.id) }, include: { reservation: true } });
+    if (!payment) return res.status(404).json({ error: 'Pago de prueba no encontrado.' });
+    const current = await mercadoPago.reconcile(payment);
+    res.json({ data: { status: current.status, amountCents: current.amountCents } });
+  } catch (err) { next(err); }
+}
+
 // Registro manual: el administrador verifica la operación directamente en Izipay.
 async function adminUpdateIzipay(req, res, next) {
   try {
@@ -280,4 +306,4 @@ async function adminUpdateIzipay(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { create, adminList, adminDetail, adminUpdateEstado, adminDelete, adminUpdateIzipay, adminRefreshIzipayTest };
+module.exports = { create, adminList, adminDetail, adminUpdateEstado, adminDelete, adminUpdateIzipay, adminRefreshIzipayTest, adminRefreshMercadoPagoTest };

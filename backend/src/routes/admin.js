@@ -60,6 +60,7 @@ router.get   ('/reservations/:id',              res_.adminDetail);
 router.patch ('/reservations/:id/estado',       res_.adminUpdateEstado);
 router.patch ('/reservations/:id/izipay',       res_.adminUpdateIzipay);
 router.post  ('/reservations/:id/izipay-test/refresh', res_.adminRefreshIzipayTest);
+router.post  ('/reservations/:id/mercadopago-test/refresh', res_.adminRefreshMercadoPagoTest);
 router.delete('/reservations/:id',              res_.adminDelete);
 
 module.exports = router;

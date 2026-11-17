@@ -130,6 +130,8 @@ export const accommodationsService = {
 };
 
 export const reservationsService = {
+  async getMercadoPagoTest() { return await request('/mercadopago-test'); },
+  async getMercadoPagoTestStatus(token) { return await request('/mercadopago-test/status', { headers: { 'X-Payment-Token': token } }); },
   async getIzipayTest() { return await request('/izipay-test'); },
   async getIzipayTestStatus(token) { return await request('/izipay-test/status', { headers: { 'X-Payment-Token': token } }); },
   async getManualPayment() { return await request('/payment-manual'); },
@@ -248,6 +250,7 @@ export const adminService = {
     return await request(`/admin/reservations/${id}/izipay`, { method: 'PATCH', body: JSON.stringify(data) });
   },
   async refreshIzipayTest(id) { return await request(`/admin/reservations/${id}/izipay-test/refresh`, { method: 'POST' }); },
+  async refreshMercadoPagoTest(id) { return await request(`/admin/reservations/${id}/mercadopago-test/refresh`, { method: 'POST' }); },
   async deleteReservation(id) {
     return await request(`/admin/reservations/${id}`, {
       method: 'DELETE',

@@ -198,7 +198,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                         <div>→ {r.salida}</div>
                       </td>
                       <td style={{ fontWeight: 700, color: 'var(--primary)' }}>S/ {Number(r.total || 0).toLocaleString('es-PE')}</td>
-                      <td>{r.izipayTest ? (r.izipayTest.status === 'PAGADA_PRUEBA' ? 'Izipay pagada (prueba)' : `Izipay ${r.izipayTest.status.toLowerCase()} (prueba)`) : r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
+                      <td>{r.mercadoPagoTest ? `Mercado Pago ${r.mercadoPagoTest.status.toLowerCase()} (prueba)` : r.izipayTest ? (r.izipayTest.status === 'PAGADA_PRUEBA' ? 'Izipay pagada (prueba)' : `Izipay ${r.izipayTest.status.toLowerCase()} (prueba)`) : r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
                       <td>
                         <span className={`status-badge status-${r.estado || 'pendiente'}`}>
                           {r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Pendiente'}
@@ -269,13 +269,20 @@ export default function AdminReservas({ reservas, setReservas }) {
                   </div>
                 )}
                 <div style={{ paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border)' }}>
-                  <div>Pago: <strong>{selected.izipayPaidAt ? 'Verificado manualmente' : selected.izipayLink ? 'Enlace pendiente' : selected.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Prueba pagada — sin cobro real' : selected.pagoPrueba?.status === 'VENCIDA' ? 'Prueba vencida' : selected.pagoPrueba ? 'Pago de prueba pendiente' : selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
+                  <div>Pago: <strong>{selected.mercadoPagoTest ? `Mercado Pago ${selected.mercadoPagoTest.status} (prueba)` : selected.izipayPaidAt ? 'Verificado manualmente' : selected.izipayLink ? 'Enlace pendiente' : selected.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Prueba pagada — sin cobro real' : selected.pagoPrueba?.status === 'VENCIDA' ? 'Prueba vencida' : selected.pagoPrueba ? 'Pago de prueba pendiente' : selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
                   {selected.pagoPrueba && <div>Tarifa de prueba: S/ {(selected.pagoPrueba.amountCents / 100).toFixed(2)}</div>}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total</span>
                     <strong style={{ color: 'var(--primary)', fontSize: 'var(--text-base)' }}>S/ {Number(selected.total || 0).toLocaleString('es-PE')}</strong>
                   </div>
                 </div>
+                {selected.mercadoPagoTest && <div>Estado Mercado Pago de prueba: <strong>{selected.mercadoPagoTest.status}</strong> · S/ {(selected.mercadoPagoTest.amountCents / 100).toFixed(2)}<br /><button className="btn btn-outline btn-sm" onClick={async () => {
+                  try {
+                    const result = await adminService.refreshMercadoPagoTest(selected.id);
+                    setReservas(current => current.map(r => r.id === selected.id ? { ...r, mercadoPagoTest: result.data } : r));
+                    setSelected(current => ({ ...current, mercadoPagoTest: result.data }));
+                  } catch (err) { alert('No se pudo consultar Mercado Pago: ' + err.message); }
+                }}>Consultar a Mercado Pago</button></div>}
                 {selected.izipayTest && <div>Estado Izipay de prueba: <strong>{selected.izipayTest.status}</strong> · S/ {(selected.izipayTest.amountCents / 100).toFixed(2)}<br /><button className="btn btn-outline btn-sm" onClick={async () => {
                   try {
                     const result = await adminService.refreshIzipayTest(selected.id);
@@ -283,7 +290,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                     setSelected(current => ({ ...current, izipayTest: result.data }));
                   } catch (err) { alert('No se pudo consultar Izipay: ' + err.message); }
                 }}>Consultar a Izipay</button></div>}
-                {!selected.izipayTest && <IzipayManual key={selected.id} reservation={selected} onSaved={data => {
+                {!selected.izipayTest && !selected.mercadoPagoTest && <IzipayManual key={selected.id} reservation={selected} onSaved={data => {
                   setReservas(current => current.map(r => r.id === selected.id ? { ...r, ...data } : r));
                   setSelected(current => ({ ...current, ...data }));
                 }} />}
