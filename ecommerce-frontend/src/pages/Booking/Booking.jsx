@@ -16,6 +16,7 @@ export default function Booking() {
   const [demoEnabled, setDemoEnabled] = useState(false);
   const [paymentStep, setPaymentStep] = useState(false);
   const [culqiTest, setCulqiTest] = useState(false);
+  const [manualPayment, setManualPayment] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -25,6 +26,7 @@ export default function Booking() {
     reservationsService.getPaymentTest().then(result => {
       if (active) setCulqiTest(result.enabled === true);
     }).catch(() => {});
+    reservationsService.getManualPayment().then(result => { if (active) setManualPayment(result.enabled === true); }).catch(() => {});
     return () => { active = false; };
   }, []);
 
@@ -112,6 +114,7 @@ export default function Booking() {
           personas: Number(form.personas),
           pagoSimulado: res.data.estadoPago === 'SIMULADO',
           testPayment: res.data.testPayment,
+          manualPayment: manualPayment && !demoEnabled && !culqiTest,
         }
       });
     } catch (err) {
@@ -128,7 +131,7 @@ export default function Booking() {
           <span className="section-label">Formulario de reserva</span>
           <h1 className="booking-title">Registra tu solicitud</h1>
           <p className="booking-subtitle">
-            {culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
+            {culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : manualPayment ? 'Registra tu solicitud. Te contactaremos para coordinar el pago de la tarifa del 5 % y el saldo restante.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
           </p>
         </div>
 
@@ -312,13 +315,14 @@ export default function Booking() {
                 )}
               </button>
               <p className="booking-legal">
-                {culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.'}
+                {culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : manualPayment && !demoEnabled ? 'La solicitud queda pendiente. El pago se coordinará mediante un enlace individual.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.'}
               </p>
             </div>
           </form>
 
           {/* Summary */}
           {item ? <BookingSummary
+            manualPayment={manualPayment && !demoEnabled && !culqiTest}
             tipo={tipo}
             nombre={nombre}
             form={form}

@@ -130,6 +130,7 @@ export const accommodationsService = {
 };
 
 export const reservationsService = {
+  async getManualPayment() { return await request('/payment-manual'); },
   async getPaymentDemo() {
     return await request('/payment-demo');
   },
@@ -240,6 +241,9 @@ export const adminService = {
       method: 'PATCH',
       body: JSON.stringify({ estado }),
     });
+  },
+  async updateIzipay(id, data) {
+    return await request(`/admin/reservations/${id}/izipay`, { method: 'PATCH', body: JSON.stringify(data) });
   },
   async deleteReservation(id) {
     return await request(`/admin/reservations/${id}`, {

@@ -162,6 +162,9 @@ model Reservation {
   // Estados
   estado          ReservationStatus  @default(PENDIENTE)
   estadoPago      PaymentStatus      @default(SIN_PAGO) @map("estado_pago")
+  izipayLink      String?            @map("izipay_link") @db.VarChar(2048)
+  izipayReference String?            @map("izipay_reference") @db.VarChar(150)
+  izipayPaidAt    DateTime?          @map("izipay_paid_at")
 
   createdAt       DateTime           @default(now()) @map("created_at")
   updatedAt       DateTime           @updatedAt @map("updated_at")

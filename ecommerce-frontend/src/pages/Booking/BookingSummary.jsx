@@ -1,4 +1,4 @@
-export default function BookingSummary({ tipo, nombre, form, nights, precio, subtotal, serviceFee, total }) {
+export default function BookingSummary({ tipo, nombre, form, nights, precio, subtotal, serviceFee, total, manualPayment }) {
   return (
     <aside className="booking-summary" aria-label="Resumen de reserva">
       <div className="booking-summary__card">
@@ -61,7 +61,7 @@ export default function BookingSummary({ tipo, nombre, form, nights, precio, sub
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <p>
-            Solicitud de prueba sin pago real. El servidor calcula el importe definitivo al registrarla.
+            {manualPayment ? 'La tarifa del 5 % se paga mediante un enlace; el saldo se coordina con el proveedor. El servidor calcula el importe definitivo.' : 'Solicitud de prueba sin pago real. El servidor calcula el importe definitivo al registrarla.'}
           </p>
         </div>
       </div>

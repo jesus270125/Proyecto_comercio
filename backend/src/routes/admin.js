@@ -58,6 +58,7 @@ router.patch ('/accommodations/:id/publish', acc.adminTogglePublish);
 router.get   ('/reservations',                  res_.adminList);
 router.get   ('/reservations/:id',              res_.adminDetail);
 router.patch ('/reservations/:id/estado',       res_.adminUpdateEstado);
+router.patch ('/reservations/:id/izipay',       res_.adminUpdateIzipay);
 router.delete('/reservations/:id',              res_.adminDelete);
 
 module.exports = router;

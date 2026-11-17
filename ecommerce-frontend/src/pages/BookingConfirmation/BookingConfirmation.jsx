@@ -20,7 +20,7 @@ export default function BookingConfirmation() {
     );
   }
 
-  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas, pagoSimulado, testPayment } = state;
+  const { reservationId, form, nombreItem, tipo, subtotal, serviceFee, total, nights, personas, pagoSimulado, testPayment, manualPayment } = state;
 
   return (
     <div className="confirmation-page">
@@ -40,7 +40,7 @@ export default function BookingConfirmation() {
             ¡Gracias, {form.nombre}!
           </h1>
           <p className="confirmation-subtitle">
-            {testPayment ? 'Tu solicitud está pendiente. Completa el pago de prueba de la tarifa para ensayar el proceso.' : pagoSimulado ? 'Tu solicitud quedó pendiente y se registró un pago simulado. No se realizó ningún cobro real.' : 'Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.'}
+            {testPayment ? 'Tu solicitud está pendiente. Completa el pago de prueba de la tarifa para ensayar el proceso.' : pagoSimulado ? 'Tu solicitud quedó pendiente y se registró un pago simulado. No se realizó ningún cobro real.' : manualPayment ? 'Tu solicitud está pendiente. Te contactaremos para coordinar el pago de la tarifa mediante un enlace de Izipay.' : 'Tu solicitud de prueba se registró con estado pendiente. Esta demostración no envía correos ni procesa pagos reales.'}
           </p>
 
           {/* Reservation ID */}
@@ -126,7 +126,7 @@ export default function BookingConfirmation() {
               <strong>Total</strong>
               <strong>S/ {total.toFixed(2)}</strong>
             </div>
-            {pagoSimulado && <div className="confirmation-pricing__row"><span>Adelanto simulado</span><span>S/ {serviceFee.toFixed(2)}</span></div>}
+            {(pagoSimulado || manualPayment) && <><div className="confirmation-pricing__row"><span>{pagoSimulado ? 'Adelanto simulado' : 'Tarifa pendiente de pago'}</span><span>S/ {serviceFee.toFixed(2)}</span></div><div className="confirmation-pricing__row"><span>Saldo a coordinar con el proveedor</span><span>S/ {subtotal.toFixed(2)}</span></div></>}
           </div>
 
           {/* Disclaimer */}
@@ -137,8 +137,7 @@ export default function BookingConfirmation() {
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             <p>
-              Esta solicitud de prueba se guarda en la base de datos con estado pendiente.
-              No se ha realizado ningún pago ni se ha enviado un correo.
+              {manualPayment ? 'Aún no se ha efectuado ningún pago. Conserva tu código de reserva; el enlace se enviará por separado y el saldo se coordinará con el proveedor.' : 'Esta solicitud de prueba se guarda en la base de datos con estado pendiente. No se ha realizado ningún pago ni se ha enviado un correo.'}
             </p>
           </div>}
 

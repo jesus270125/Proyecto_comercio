@@ -24,6 +24,7 @@ router.get('/accommodations/:slug',  acc.detail);
 
 // Reservas (invitados pueden reservar)
 router.get('/payment-demo', (req, res) => res.json({ enabled: process.env.NODE_ENV === 'development' && process.env.PAYMENT_DEMO_ENABLED === 'true' }));
+router.get('/payment-manual', (req, res) => res.json({ enabled: process.env.IZIPAY_MANUAL_ENABLED === 'true' }));
 router.get('/payment-test', (req, res) => {
   try { res.set('Cache-Control', 'no-store').json({ enabled: Boolean(getCulqiTestConfig()) }); }
   catch { res.status(503).json({ error: 'Pago de prueba no disponible.' }); }

@@ -172,6 +172,9 @@ async function adminList(req, res, next) {
       total: parseFloat(r.total),
       estado: r.estado.toLowerCase(),
       estadoPago: r.estadoPago,
+      izipayLink: r.izipayLink,
+      izipayReference: r.izipayReference,
+      izipayPaidAt: r.izipayPaidAt,
       pagoPrueba: r.testPayment && r.testPayment.status !== 'PAGADA_PRUEBA' && r.testPayment.expiresAt < new Date()
         ? { ...r.testPayment, status: 'VENCIDA' } : r.testPayment,
       createdAt: r.createdAt,
@@ -223,4 +226,30 @@ async function adminDelete(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { create, adminList, adminDetail, adminUpdateEstado, adminDelete };
+// Registro manual: el administrador verifica la operación directamente en Izipay.
+async function adminUpdateIzipay(req, res, next) {
+  try {
+    const { link, reference, paid } = req.body || {};
+    if (typeof paid !== 'boolean' || typeof link !== 'string' || link.length > 2048 || typeof reference !== 'string' || reference.length > 150)
+      return res.status(400).json({ error: 'Datos de pago inválidos.' });
+    let url;
+    try { url = new URL(link.trim()); } catch { return res.status(400).json({ error: 'Ingresa un enlace HTTPS válido.' }); }
+    if (url.protocol !== 'https:' || url.username || url.password)
+      return res.status(400).json({ error: 'Ingresa un enlace HTTPS válido sin credenciales.' });
+    if (paid && !reference.trim()) return res.status(400).json({ error: 'Ingresa la referencia de la operación verificada en Izipay.' });
+    const existing = await prisma.reservation.findUnique({ where: { id: Number(req.params.id) } });
+    if (!existing) return res.status(404).json({ error: 'Reserva no encontrada.' });
+    if (paid && existing.izipayLink !== link.trim()) return res.status(400).json({ error: 'Guarda el enlace antes de registrar el pago.' });
+    if (paid && existing.estado === 'CANCELADA') return res.status(409).json({ error: 'No se puede registrar un pago para una reserva cancelada.' });
+    if (existing.izipayPaidAt && (!paid || existing.izipayLink !== link.trim() || existing.izipayReference !== reference.trim()))
+      return res.status(409).json({ error: 'Este pago ya fue registrado. Revisa cualquier corrección con administración.' });
+    const updated = await prisma.reservation.update({
+      where: { id: existing.id },
+      data: { izipayLink: link.trim(), izipayReference: paid ? reference.trim() : null, izipayPaidAt: paid ? (existing.izipayPaidAt || new Date()) : null },
+      select: { izipayLink: true, izipayReference: true, izipayPaidAt: true },
+    });
+    res.json({ data: updated });
+  } catch (err) { next(err); }
+}
+
+module.exports = { create, adminList, adminDetail, adminUpdateEstado, adminDelete, adminUpdateIzipay };

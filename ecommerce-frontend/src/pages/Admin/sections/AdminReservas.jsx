@@ -20,6 +20,38 @@ const IcEye = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 );
 
+function IzipayManual({ reservation, onSaved }) {
+  const [link, setLink] = useState(reservation.izipayLink || '');
+  const [reference, setReference] = useState(reservation.izipayReference || '');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const paid = Boolean(reservation.izipayPaidAt);
+  const save = async (markPaid) => {
+    if (markPaid && !window.confirm('¿Comprobaste en Izipay que esta operación corresponde a esta reserva y al importe indicado?')) return;
+    setSaving(true); setError('');
+    try {
+      const result = await adminService.updateIzipay(reservation.id, { link: link.trim(), reference: reference.trim(), paid: markPaid });
+      onSaved(result.data);
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  };
+  return <div style={{ display: 'grid', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+    <strong>Enlace Izipay · gestión manual</strong>
+    <span>Reserva {reservation.codigo} · Tarifa a cobrar: S/ {Number(reservation.serviceFee || 0).toFixed(2)}</span>
+    <span>Saldo a coordinar: S/ {Number(reservation.subtotal || 0).toFixed(2)}</span>
+    <label htmlFor="izipay-link">Enlace individual de pago</label>
+    <input id="izipay-link" type="url" value={link} disabled={paid} onChange={e => setLink(e.target.value)} placeholder="https://..." />
+    {!paid && <button className="btn btn-outline btn-sm" disabled={saving || !link.trim()} onClick={() => save(false)}>Guardar enlace</button>}
+    {reservation.izipayLink && !paid && <p>Comparte manualmente el enlace guardado con el cliente. Confirma el importe en Izipay antes de enviarlo.</p>}
+    {reservation.izipayLink && <a href={reservation.izipayLink} target="_blank" rel="noopener noreferrer">Abrir enlace guardado</a>}
+    <label htmlFor="izipay-reference">Referencia de operación en Izipay</label>
+    <input id="izipay-reference" value={reference} disabled={paid} onChange={e => setReference(e.target.value)} placeholder="Referencia del pago" />
+    {!paid && <button className="btn btn-primary btn-sm" disabled={saving || !reservation.izipayLink || !reference.trim() || link.trim() !== reservation.izipayLink} onClick={() => save(true)}>Registrar pago verificado</button>}
+    {paid && <p>Pago registrado manualmente como verificado. Referencia: {reservation.izipayReference}.</p>}
+    {error && <p role="alert">{error}</p>}
+  </div>;
+}
+
 export default function AdminReservas({ reservas, setReservas }) {
   const [search, setSearch] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todas');
@@ -166,7 +198,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                         <div>→ {r.salida}</div>
                       </td>
                       <td style={{ fontWeight: 700, color: 'var(--primary)' }}>S/ {Number(r.total || 0).toLocaleString('es-PE')}</td>
-                      <td>{r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
+                      <td>{r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
                       <td>
                         <span className={`status-badge status-${r.estado || 'pendiente'}`}>
                           {r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Pendiente'}
@@ -211,7 +243,7 @@ export default function AdminReservas({ reservas, setReservas }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>ID Reserva</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', marginTop: 2 }}>{selected.id}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', marginTop: 2 }}>{selected.codigo}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cliente</div>
@@ -237,13 +269,17 @@ export default function AdminReservas({ reservas, setReservas }) {
                   </div>
                 )}
                 <div style={{ paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border)' }}>
-                  <div>Pago: <strong>{selected.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Prueba pagada — sin cobro real' : selected.pagoPrueba?.status === 'VENCIDA' ? 'Prueba vencida' : selected.pagoPrueba ? 'Pago de prueba pendiente' : selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
+                  <div>Pago: <strong>{selected.izipayPaidAt ? 'Verificado manualmente' : selected.izipayLink ? 'Enlace pendiente' : selected.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Prueba pagada — sin cobro real' : selected.pagoPrueba?.status === 'VENCIDA' ? 'Prueba vencida' : selected.pagoPrueba ? 'Pago de prueba pendiente' : selected.estadoPago === 'SIMULADO' ? 'Simulado — sin cobro real' : 'Sin pago registrado'}</strong></div>
                   {selected.pagoPrueba && <div>Tarifa de prueba: S/ {(selected.pagoPrueba.amountCents / 100).toFixed(2)}</div>}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total</span>
                     <strong style={{ color: 'var(--primary)', fontSize: 'var(--text-base)' }}>S/ {Number(selected.total || 0).toLocaleString('es-PE')}</strong>
                   </div>
                 </div>
+                <IzipayManual key={selected.id} reservation={selected} onSaved={data => {
+                  setReservas(current => current.map(r => r.id === selected.id ? { ...r, ...data } : r));
+                  setSelected(current => ({ ...current, ...data }));
+                }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                   {selected.estado !== 'confirmada' && (
                     <button className="btn btn-primary btn-sm w-full" onClick={() => updateEstado(selected.id, 'confirmada')}>
