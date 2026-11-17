@@ -198,7 +198,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                         <div>→ {r.salida}</div>
                       </td>
                       <td style={{ fontWeight: 700, color: 'var(--primary)' }}>S/ {Number(r.total || 0).toLocaleString('es-PE')}</td>
-                      <td>{r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
+                      <td>{r.izipayTest ? (r.izipayTest.status === 'PAGADA_PRUEBA' ? 'Izipay pagada (prueba)' : `Izipay ${r.izipayTest.status.toLowerCase()} (prueba)`) : r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
                       <td>
                         <span className={`status-badge status-${r.estado || 'pendiente'}`}>
                           {r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Pendiente'}
@@ -276,10 +276,17 @@ export default function AdminReservas({ reservas, setReservas }) {
                     <strong style={{ color: 'var(--primary)', fontSize: 'var(--text-base)' }}>S/ {Number(selected.total || 0).toLocaleString('es-PE')}</strong>
                   </div>
                 </div>
-                <IzipayManual key={selected.id} reservation={selected} onSaved={data => {
+                {selected.izipayTest && <div>Estado Izipay de prueba: <strong>{selected.izipayTest.status}</strong> · S/ {(selected.izipayTest.amountCents / 100).toFixed(2)}<br /><button className="btn btn-outline btn-sm" onClick={async () => {
+                  try {
+                    const result = await adminService.refreshIzipayTest(selected.id);
+                    setReservas(current => current.map(r => r.id === selected.id ? { ...r, izipayTest: result.data } : r));
+                    setSelected(current => ({ ...current, izipayTest: result.data }));
+                  } catch (err) { alert('No se pudo consultar Izipay: ' + err.message); }
+                }}>Consultar a Izipay</button></div>}
+                {!selected.izipayTest && <IzipayManual key={selected.id} reservation={selected} onSaved={data => {
                   setReservas(current => current.map(r => r.id === selected.id ? { ...r, ...data } : r));
                   setSelected(current => ({ ...current, ...data }));
-                }} />
+                }} />}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                   {selected.estado !== 'confirmada' && (
                     <button className="btn btn-primary btn-sm w-full" onClick={() => updateEstado(selected.id, 'confirmada')}>

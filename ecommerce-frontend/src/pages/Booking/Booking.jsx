@@ -17,6 +17,7 @@ export default function Booking() {
   const [paymentStep, setPaymentStep] = useState(false);
   const [culqiTest, setCulqiTest] = useState(false);
   const [manualPayment, setManualPayment] = useState(false);
+  const [izipayTestEnabled, setIzipayTestEnabled] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -27,6 +28,7 @@ export default function Booking() {
       if (active) setCulqiTest(result.enabled === true);
     }).catch(() => {});
     reservationsService.getManualPayment().then(result => { if (active) setManualPayment(result.enabled === true); }).catch(() => {});
+    reservationsService.getIzipayTest().then(result => { if (active) setIzipayTestEnabled(result.enabled === true); }).catch(() => {});
     return () => { active = false; };
   }, []);
 
@@ -69,11 +71,12 @@ export default function Booking() {
     e.preventDefault();
     if (!item) return;
     const errs = validateForm(form);
+    if (izipayTestEnabled && (!form.street.trim() || !form.postalCode.trim() || !form.city.trim() || !form.state.trim() || !form.country.trim() || !form.document.trim())) errs.submit = 'Completa los datos de facturación para la prueba de Izipay.';
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    if (demoEnabled && !paymentStep) {
+    if (demoEnabled && !izipayTestEnabled && !paymentStep) {
       setPaymentStep(true);
       return;
     }
@@ -93,7 +96,8 @@ export default function Booking() {
         fechaLlegada: form.llegada,
         fechaSalida: form.salida,
         personas: parseInt(form.personas, 10) || 1,
-        pagoSimulado: demoEnabled && !culqiTest,
+        pagoSimulado: demoEnabled && !culqiTest && !izipayTestEnabled,
+        ...(izipayTestEnabled ? { izipayBilling: { street: form.street, postalCode: form.postalCode, city: form.city, state: form.state, country: form.country.toUpperCase(), documentType: form.documentType, document: form.document } } : {}),
       };
 
       const res = await reservationsService.create(payload);
@@ -114,7 +118,8 @@ export default function Booking() {
           personas: Number(form.personas),
           pagoSimulado: res.data.estadoPago === 'SIMULADO',
           testPayment: res.data.testPayment,
-          manualPayment: manualPayment && !demoEnabled && !culqiTest,
+          izipayTest: res.data.izipayTest,
+          manualPayment: manualPayment && !demoEnabled && !culqiTest && !izipayTestEnabled,
         }
       });
     } catch (err) {
@@ -131,7 +136,7 @@ export default function Booking() {
           <span className="section-label">Formulario de reserva</span>
           <h1 className="booking-title">Registra tu solicitud</h1>
           <p className="booking-subtitle">
-            {culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : manualPayment ? 'Registra tu solicitud. Te contactaremos para coordinar el pago de la tarifa del 5 % y el saldo restante.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
+            {izipayTestEnabled ? 'Entorno de prueba de Izipay: solo tarjetas de prueba. No se cobrará dinero real.' : culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : manualPayment ? 'Registra tu solicitud. Te contactaremos para coordinar el pago de la tarifa del 5 % y el saldo restante.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
           </p>
         </div>
 
@@ -213,6 +218,14 @@ export default function Booking() {
               </div>
             </section>
 
+            {izipayTestEnabled && <section className="booking-section" aria-labelledby="billing-data">
+              <h2 className="booking-section__title" id="billing-data">Datos de facturación de prueba</h2>
+              <p>En pruebas usa únicamente datos ficticios y tarjetas de prueba.</p>
+              <div className="booking-grid-2">
+                {[['street','Dirección'], ['postalCode','Código postal'], ['city','Ciudad'], ['state','Departamento o estado'], ['country','País (código ISO, ej. PE)'], ['document','Número de documento']].map(([name, label]) => <div className="form-group" key={name}><label className="form-label" htmlFor={`billing-${name}`}>{label} *</label><input className="form-input" id={`billing-${name}`} name={name} value={form[name]} onChange={handleChange} /></div>)}
+                <div className="form-group"><label className="form-label" htmlFor="billing-documentType">Tipo de documento</label><select className="form-select" id="billing-documentType" name="documentType" value={form.documentType} onChange={handleChange}>{['DNI','CE','PASAPORTE','RUC','OTROS'].map(v => <option key={v}>{v}</option>)}</select></div>
+              </div>
+            </section>}
             <section className="booking-section" aria-labelledby="trip-data">
               <h2 className="booking-section__title" id="trip-data">Detalles del viaje</h2>
               <div className="booking-grid-3">
@@ -286,7 +299,7 @@ export default function Booking() {
             </section>
 
             <div className="booking-actions">
-              {demoEnabled && paymentStep && (
+              {demoEnabled && !izipayTestEnabled && paymentStep && (
                 <div role="status" style={{ padding: '1rem', marginBottom: '1rem', background: '#fff8e1', borderRadius: '0.5rem' }}>
                   <strong>Simulación de pago</strong>
                   <p>Adelanto de prueba: S/ {serviceFee.toFixed(2)}. Saldo de referencia: S/ {subtotal.toFixed(2)}.</p>
@@ -307,7 +320,7 @@ export default function Booking() {
                   </>
                 ) : (
                   <>
-                    {culqiTest ? 'Continuar al pago de prueba' : demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
+                    {izipayTestEnabled || culqiTest ? 'Continuar al pago de prueba' : demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                     </svg>
@@ -315,14 +328,14 @@ export default function Booking() {
                 )}
               </button>
               <p className="booking-legal">
-                {culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : manualPayment && !demoEnabled ? 'La solicitud queda pendiente. El pago se coordinará mediante un enlace individual.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.'}
+                {izipayTestEnabled ? 'La prueba utiliza tarjetas de prueba; no se realizará ningún cargo real.' : culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : manualPayment && !demoEnabled ? 'La solicitud queda pendiente. El pago se coordinará mediante un enlace individual.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.'}
               </p>
             </div>
           </form>
 
           {/* Summary */}
           {item ? <BookingSummary
-            manualPayment={manualPayment && !demoEnabled && !culqiTest}
+            manualPayment={manualPayment && !demoEnabled && !culqiTest && !izipayTestEnabled}
             tipo={tipo}
             nombre={nombre}
             form={form}

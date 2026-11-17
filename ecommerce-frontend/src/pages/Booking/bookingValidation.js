@@ -7,6 +7,7 @@ export const initialForm = {
   salida: '',
   personas: '2',
   observaciones: '',
+  street: '', postalCode: '', city: '', state: '', country: 'PE', documentType: 'DNI', document: '',
 };
 
 export function validateForm(form) {

@@ -130,6 +130,8 @@ export const accommodationsService = {
 };
 
 export const reservationsService = {
+  async getIzipayTest() { return await request('/izipay-test'); },
+  async getIzipayTestStatus(token) { return await request('/izipay-test/status', { headers: { 'X-Payment-Token': token } }); },
   async getManualPayment() { return await request('/payment-manual'); },
   async getPaymentDemo() {
     return await request('/payment-demo');
@@ -245,6 +247,7 @@ export const adminService = {
   async updateIzipay(id, data) {
     return await request(`/admin/reservations/${id}/izipay`, { method: 'PATCH', body: JSON.stringify(data) });
   },
+  async refreshIzipayTest(id) { return await request(`/admin/reservations/${id}/izipay-test/refresh`, { method: 'POST' }); },
   async deleteReservation(id) {
     return await request(`/admin/reservations/${id}`, {
       method: 'DELETE',

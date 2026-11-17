@@ -9,6 +9,7 @@ const { optionalAuth } = require('../middleware/auth');
 const { validateReservation } = require('../middleware/validate');
 const payments = require('../services/culqiTestPayments');
 const { getCulqiTestConfig } = require('../services/culqiConfig');
+const izipay = require('../services/izipaySandbox');
 
 // Destinos
 router.get('/destinations',       dest.list);
@@ -25,6 +26,12 @@ router.get('/accommodations/:slug',  acc.detail);
 // Reservas (invitados pueden reservar)
 router.get('/payment-demo', (req, res) => res.json({ enabled: process.env.NODE_ENV === 'development' && process.env.PAYMENT_DEMO_ENABLED === 'true' }));
 router.get('/payment-manual', (req, res) => res.json({ enabled: process.env.IZIPAY_MANUAL_ENABLED === 'true' }));
+router.get('/izipay-test', (req, res) => {
+  try { res.set('Cache-Control', 'no-store').json({ enabled: Boolean(izipay.config()) }); }
+  catch { res.status(503).json({ error: 'Izipay de prueba no disponible.' }); }
+});
+router.get('/izipay-test/status', izipay.status);
+router.post('/izipay-test/webhook', izipay.webhook);
 router.get('/payment-test', (req, res) => {
   try { res.set('Cache-Control', 'no-store').json({ enabled: Boolean(getCulqiTestConfig()) }); }
   catch { res.status(503).json({ error: 'Pago de prueba no disponible.' }); }
