@@ -50,6 +50,7 @@ async function createOrder(reservation, payment) {
   const order = await api('/v1/orders', { method: 'POST', headers: { 'X-Idempotency-Key': `reserva-test-${reservation.id}` }, body: JSON.stringify({
     type: 'online', processing_mode: 'manual', total_amount: amount, external_reference: reservation.codigo,
     description: `Tarifa de prueba ${reservation.codigo}`,
+    config: { statement_descriptor: 'APURIMAC TUR' },
     items: [{ title: `Tarifa de reserva ${reservation.codigo}`, unit_price: amount, quantity: 1 }],
   }) });
   const candidate = { ...payment, providerId: order.id, reservation };
