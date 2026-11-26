@@ -1,4 +1,4 @@
-export default function BookingSummary({ tipo, nombre, form, nights, precio, subtotal, serviceFee, total, manualPayment }) {
+export default function BookingSummary({ tipo, nombre, form, nights, precio, subtotal, serviceFee, total, manualPayment, mercadoPagoEnabled }) {
   return (
     <aside className="booking-summary" aria-label="Resumen de reserva">
       <div className="booking-summary__card">
@@ -50,8 +50,8 @@ export default function BookingSummary({ tipo, nombre, form, nights, precio, sub
             <strong>Total estimado</strong>
             <strong className="booking-summary__total-val">S/ {total.toFixed(2)}</strong>
           </div>
-          <div className="booking-summary__row"><span>Adelanto de referencia (tarifa de servicio)</span><span>S/ {serviceFee.toFixed(2)}</span></div>
-          <div className="booking-summary__row"><span>Saldo de referencia</span><span>S/ {subtotal.toFixed(2)}</span></div>
+          <div className="booking-summary__row"><span>{mercadoPagoEnabled ? 'Pagas ahora' : 'Adelanto de referencia (tarifa de servicio)'}</span><span>S/ {serviceFee.toFixed(2)}</span></div>
+          <div className="booking-summary__row"><span>{mercadoPagoEnabled ? 'Saldo con el proveedor' : 'Saldo de referencia'}</span><span>S/ {subtotal.toFixed(2)}</span></div>
         </div> : <p>Selecciona las fechas para calcular el importe.</p>}
 
         <div className="booking-summary__note">
@@ -61,7 +61,7 @@ export default function BookingSummary({ tipo, nombre, form, nights, precio, sub
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <p>
-            {manualPayment ? 'La tarifa del 5 % se paga mediante un enlace; el saldo se coordina con el proveedor. El servidor calcula el importe definitivo.' : 'Solicitud de prueba sin pago real. El servidor calcula el importe definitivo al registrarla.'}
+            {mercadoPagoEnabled ? 'Pagas la tarifa del 5 % en Mercado Pago. La solicitud queda pendiente de confirmación.' : manualPayment ? 'La tarifa del 5 % se paga mediante un enlace; el saldo se coordina con el proveedor. El servidor calcula el importe definitivo.' : 'Solicitud de prueba sin pago real. El servidor calcula el importe definitivo al registrarla.'}
           </p>
         </div>
       </div>

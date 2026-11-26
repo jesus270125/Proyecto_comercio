@@ -132,4 +132,4 @@ async function webhook(req, res, next) {
     return res.sendStatus(200);
   } catch (error) { next(error); }
 }
-module.exports = { config, createOrder, reconcile, status, webhook, validSignature, verifyOrder };
+module.exports = { config, createOrder, reconcile, status, webhook, validSignature, verifyOrder, getSeller, ordersClient };

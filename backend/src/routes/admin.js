@@ -7,6 +7,7 @@ const dest  = require('../controllers/destinationsController');
 const exp   = require('../controllers/experiencesController');
 const acc   = require('../controllers/accommodationsController');
 const res_  = require('../controllers/reservationsController');
+const mercadoPagoLive = require('../services/mercadoPagoLive');
 const express = require('express');
 const fs = require('fs/promises');
 const path = require('path');
@@ -61,6 +62,7 @@ router.patch ('/reservations/:id/estado',       res_.adminUpdateEstado);
 router.patch ('/reservations/:id/izipay',       res_.adminUpdateIzipay);
 router.post  ('/reservations/:id/izipay-test/refresh', res_.adminRefreshIzipayTest);
 router.post  ('/reservations/:id/mercadopago-test/refresh', res_.adminRefreshMercadoPagoTest);
+router.post  ('/reservations/:id/mercadopago/:action', mercadoPagoLive.adminAction);
 router.delete('/reservations/:id',              res_.adminDelete);
 
 module.exports = router;

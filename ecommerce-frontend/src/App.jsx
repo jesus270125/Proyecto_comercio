@@ -12,6 +12,7 @@ import AccommodationDetail from './pages/AccommodationDetail/AccommodationDetail
 import Destinations from './pages/Destinations/Destinations';
 import Booking from './pages/Booking/Booking';
 import BookingConfirmation from './pages/BookingConfirmation/BookingConfirmation';
+import MercadoPagoReturn from './pages/BookingConfirmation/MercadoPagoPayment';
 import AdminLayout from './pages/Admin/AdminLayout';
 import './App.css';
 
@@ -44,6 +45,7 @@ function AppRoutes() {
               <Route path="/hospedajes/:slug" element={<AccommodationDetail />} />
               <Route path="/reservar" element={<Booking />} />
               <Route path="/confirmacion" element={<BookingConfirmation />} />
+              <Route path="/estado-pago" element={<MercadoPagoReturn />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

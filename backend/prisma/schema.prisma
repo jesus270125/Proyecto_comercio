@@ -178,12 +178,31 @@ model Reservation {
   testPayment     TestPayment?
   izipayPayment   IzipayPayment?
   mercadoPagoTest MercadoPagoTestPayment?
+  mercadoPago     MercadoPagoPayment?
 
   @@index([codigo])
   @@index([estado])
   @@index([guestEmail])
   @@index([createdAt])
   @@map("reservations")
+}
+
+model MercadoPagoPayment {
+  id               Int         @id @default(autoincrement())
+  reservationId    Int         @unique @map("reservation_id")
+  reservation      Reservation @relation(fields: [reservationId], references: [id], onDelete: Restrict)
+  accessHash       String      @unique @map("access_hash") @db.VarChar(64)
+  providerId       String?     @unique @map("provider_id") @db.VarChar(100)
+  paymentUrl       String?     @map("payment_url") @db.VarChar(2048)
+  amountCents      Int         @map("amount_cents")
+  serviceName      String      @map("service_name") @db.VarChar(200)
+  registrationDate DateTime?   @map("registration_date")
+  status           String      @default("CREANDO") @db.VarChar(24)
+  version          Int         @default(0)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  @@map("mercadopago_payments")
 }
 
 // Sólo órdenes de prueba de Mercado Pago; no representa cobros reales.

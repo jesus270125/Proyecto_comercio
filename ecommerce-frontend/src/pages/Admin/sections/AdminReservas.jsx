@@ -10,15 +10,20 @@ const ESTADOS_RESERVA = {
   completada: { label: 'Completada', style: 'confirmed' },
 };
 const ESTADOS_MERCADO_PAGO = {
+  CREANDO: 'Enlace sin generar',
   PENDIENTE: 'Pendiente',
+  EN_PROCESO: 'En proceso',
+  PAGADA: 'Acreditado',
   PAGADA_PRUEBA: 'Pagado',
   RECHAZADA: 'Rechazado',
   CANCELADA: 'Cancelado o vencido',
   REEMBOLSADA: 'Reembolsado',
+  REEMBOLSO_PARCIAL: 'Reembolso parcial',
+  CONTRACARGO: 'Contracargo',
 };
 
-function pagoMercadoPago(status) {
-  return `Mercado Pago · ${ESTADOS_MERCADO_PAGO[status] || 'Estado por confirmar'} (prueba)`;
+function pagoMercadoPago(status, prueba = true) {
+  return `Mercado Pago · ${ESTADOS_MERCADO_PAGO[status] || 'Estado por confirmar'}${prueba ? ' (prueba)' : ''}`;
 }
 
 function EstadoReserva({ estado }) {
@@ -256,7 +261,7 @@ export default function AdminReservas({ reservas, setReservas }) {
                         <div>→ {r.salida}</div>
                       </td>
                       <td style={{ fontWeight: 700, color: 'var(--primary)' }}>S/ {Number(r.total || 0).toLocaleString('es-PE')}</td>
-                      <td>{r.mercadoPagoTest ? pagoMercadoPago(r.mercadoPagoTest.status) : r.izipayTest ? (r.izipayTest.status === 'PAGADA_PRUEBA' ? 'Izipay pagada (prueba)' : `Izipay ${r.izipayTest.status.toLowerCase()} (prueba)`) : r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
+                      <td>{r.mercadoPago ? pagoMercadoPago(r.mercadoPago.status, false) : r.mercadoPagoTest ? pagoMercadoPago(r.mercadoPagoTest.status) : r.izipayTest ? (r.izipayTest.status === 'PAGADA_PRUEBA' ? 'Izipay pagada (prueba)' : `Izipay ${r.izipayTest.status.toLowerCase()} (prueba)`) : r.izipayPaidAt ? 'Verificado manualmente' : r.izipayLink ? 'Enlace pendiente' : r.pagoPrueba?.status === 'PAGADA_PRUEBA' ? 'Pagada (prueba)' : r.pagoPrueba?.status === 'VENCIDA' ? 'Vencida (prueba)' : r.pagoPrueba ? 'Pendiente (prueba)' : r.estadoPago === 'SIMULADO' ? 'Simulado' : 'Sin pago'}</td>
                       <td><EstadoReserva estado={r.estado} /></td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: '4px' }}>
@@ -301,7 +306,9 @@ export default function AdminReservas({ reservas, setReservas }) {
 
 function ReservaDetalle({ reservation, onClose, onUpdateEstado, onPaymentChange }) {
   const dialogRef = useRef(null);
-  const { mercadoPagoTest, izipayTest, pagoPrueba } = reservation;
+  const { mercadoPago, mercadoPagoTest, izipayTest, pagoPrueba } = reservation;
+  const [paymentAction, setPaymentAction] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -324,7 +331,8 @@ function ReservaDetalle({ reservation, onClose, onUpdateEstado, onPaymentChange 
   };
 
   let paymentLabel = 'Sin pago registrado';
-  if (mercadoPagoTest) paymentLabel = pagoMercadoPago(mercadoPagoTest.status);
+  if (mercadoPago) paymentLabel = pagoMercadoPago(mercadoPago.status, false);
+  else if (mercadoPagoTest) paymentLabel = pagoMercadoPago(mercadoPagoTest.status);
   else if (reservation.izipayPaidAt) paymentLabel = 'Verificado manualmente';
   else if (reservation.izipayLink) paymentLabel = 'Enlace pendiente';
   else if (pagoPrueba?.status === 'PAGADA_PRUEBA') paymentLabel = 'Prueba pagada — sin cobro real';
@@ -333,6 +341,22 @@ function ReservaDetalle({ reservation, onClose, onUpdateEstado, onPaymentChange 
   else if (reservation.estadoPago === 'SIMULADO') paymentLabel = 'Simulado — sin cobro real';
 
   const testPayment = mercadoPagoTest || pagoPrueba;
+  const amount = mercadoPago && `S/ ${(mercadoPago.amountCents / 100).toFixed(2)}`;
+
+  const updatePayment = async action => {
+    if (action === 'refund' && !window.confirm(`¿Reembolsar ${amount} al comprador de la reserva ${reservation.codigo}?`)) return;
+    if (action === 'cancel' && !window.confirm(`¿Cancelar el enlace de pago de ${amount} para la reserva ${reservation.codigo}?`)) return;
+    setPaymentAction(true);
+    setPaymentError('');
+    try {
+      const { data } = await adminService.updateMercadoPago(reservation.id, action, action !== 'refresh');
+      onPaymentChange({ mercadoPago: data });
+    } catch (err) {
+      setPaymentError(err.message);
+    } finally {
+      setPaymentAction(false);
+    }
+  };
 
   return (
     <dialog
@@ -397,6 +421,7 @@ function ReservaDetalle({ reservation, onClose, onUpdateEstado, onPaymentChange 
                 <dd><strong>S/ {(testPayment.amountCents / 100).toFixed(2)}</strong></dd>
               </div>
             )}
+            {mercadoPago && <div><dt>Tarifa de servicio</dt><dd><strong>{amount}</strong></dd></div>}
             <div>
               <dt>Total de la reserva</dt>
               <dd><strong>S/ {Number(reservation.total || 0).toFixed(2)}</strong></dd>
@@ -409,15 +434,25 @@ function ReservaDetalle({ reservation, onClose, onUpdateEstado, onPaymentChange 
               <button type="button" className="btn btn-outline btn-sm" onClick={refreshIzipay}>Consultar a Izipay</button>
             </div>
           )}
-          {!izipayTest && !mercadoPagoTest && <IzipayManual reservation={reservation} onSaved={onPaymentChange} />}
+          {mercadoPago && (
+            <div>
+              {paymentError && <p role="alert">{paymentError}</p>}
+              <div className="admin-reservation-dialog__actions">
+                <button type="button" className="btn btn-outline btn-sm" disabled={paymentAction} onClick={() => updatePayment('refresh')}>Consultar pago</button>
+                {mercadoPago.status === 'PENDIENTE' && <button type="button" className="btn btn-outline btn-sm" disabled={paymentAction} onClick={() => updatePayment('cancel')}>Cancelar enlace</button>}
+                {mercadoPago.status === 'PAGADA' && <button type="button" className="btn btn-outline btn-sm" disabled={paymentAction} onClick={() => updatePayment('refund')}>Reembolsar tarifa</button>}
+              </div>
+            </div>
+          )}
+          {!mercadoPago && !izipayTest && !mercadoPagoTest && <IzipayManual reservation={reservation} onSaved={onPaymentChange} />}
         </div>
         <footer className="admin-reservation-dialog__actions">
-          {reservation.estado !== 'cancelada' && (
+          {reservation.estado !== 'cancelada' && (!mercadoPago || ['CANCELADA', 'RECHAZADA', 'REEMBOLSADA'].includes(mercadoPago.status)) && (
             <button type="button" className="btn btn-outline btn-sm admin-reservation-dialog__cancel" onClick={() => onUpdateEstado(reservation.id, 'cancelada')}>
               <X size={14} /> Cancelar reserva
             </button>
           )}
-          {reservation.estado !== 'confirmada' && (
+          {reservation.estado !== 'confirmada' && (!mercadoPago || mercadoPago.status === 'PAGADA') && (
             <button type="button" className="btn btn-primary btn-sm" onClick={() => onUpdateEstado(reservation.id, 'confirmada')}>
               <Check size={14} /> Confirmar reserva
             </button>

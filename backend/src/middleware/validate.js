@@ -41,6 +41,7 @@ function validateReservation(req, res, next) {
   const errors = [];
   if (req.body.pagoSimulado !== undefined && typeof req.body.pagoSimulado !== 'boolean') errors.push('Opción de pago inválida.');
   if (req.body.mercadoPagoTestDocument !== undefined && typeof req.body.mercadoPagoTestDocument !== 'boolean') errors.push('Opción de documento de prueba inválida.');
+  if (req.body.mercadoPagoLiveAccepted !== undefined && typeof req.body.mercadoPagoLiveAccepted !== 'boolean') errors.push('Confirmación del pago inválida.');
   if (!text(guestNombre, 100)) errors.push('Nombre inválido.');
   if (!text(guestApellido, 100)) errors.push('Apellido inválido.');
   if (!text(guestEmail, 255) || !emailPattern.test(guestEmail)) errors.push('Email de contacto inválido.');

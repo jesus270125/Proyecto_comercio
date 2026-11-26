@@ -130,6 +130,13 @@ export const accommodationsService = {
 };
 
 export const reservationsService = {
+  async getMercadoPago() { return request('/mercadopago'); },
+  async getMercadoPagoStatus(code, token) {
+    return request(`/mercadopago/${encodeURIComponent(code)}`, { headers: { 'X-Payment-Token': token } });
+  },
+  async retryMercadoPago(code, token) {
+    return request(`/mercadopago/${encodeURIComponent(code)}/checkout`, { method: 'POST', headers: { 'X-Payment-Token': token } });
+  },
   async getMercadoPagoTest() { return await request('/mercadopago-test'); },
   async getMercadoPagoTestStatus(token) { return await request('/mercadopago-test/status', { headers: { 'X-Payment-Token': token } }); },
   async getIzipayTest() { return await request('/izipay-test'); },
@@ -251,6 +258,9 @@ export const adminService = {
   },
   async refreshIzipayTest(id) { return await request(`/admin/reservations/${id}/izipay-test/refresh`, { method: 'POST' }); },
   async refreshMercadoPagoTest(id) { return await request(`/admin/reservations/${id}/mercadopago-test/refresh`, { method: 'POST' }); },
+  async updateMercadoPago(id, action, confirm = false) {
+    return request(`/admin/reservations/${id}/mercadopago/${action}`, { method: 'POST', body: JSON.stringify({ confirm }) });
+  },
   async deleteReservation(id) {
     return await request(`/admin/reservations/${id}`, {
       method: 'DELETE',

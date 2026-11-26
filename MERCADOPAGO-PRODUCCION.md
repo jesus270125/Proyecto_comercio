@@ -1,0 +1,15 @@
+# Checkout Pro con Orders para cobros reales
+
+Apurímac Turismo cobra en PEN la tarifa de servicio del 5 %. El saldo se coordina con el proveedor. La acreditación de la tarifa se registra en el pago asociado a la reserva y el administrador confirma la disponibilidad por separado. El reembolso desde el panel devuelve la tarifa completa. Los reembolsos parciales y contracargos iniciados en Mercado Pago aparecen como estados separados.
+
+## Despliegue y activación
+
+1. Haz una copia de la base de Render y aplica `backend/prisma/mercadopago_live.sql` a esa base. El script añade una tabla y conserva los pagos de prueba anteriores. Desde `backend`, se puede aplicar con `npx prisma db execute --schema prisma/schema.prisma --file prisma/mercadopago_live.sql` en un entorno que ya tenga acceso a esa base. Genera el cliente Prisma con `npm run generate`.
+2. Revisa y publica las condiciones de reserva, cancelación y devolución de la tarifa, junto con el canal de atención al comprador. El enlace de políticas del sitio de demostración requiere una página pública aprobada por el titular del negocio.
+3. En Mercado Pago Developers, abre la aplicación de Apurímac Turismo y configura el webhook de **Producción** para el evento de órdenes en `https://apurimac-turismo-api.onrender.com/api/v1/mercadopago/webhook`. La cuenta vendedora, el Access Token y la firma del webhook deben corresponder a esa aplicación de producción.
+4. Añade en el entorno privado del backend las variables indicadas en `backend/.env.example`. Usa el ID numérico de la aplicación y del vendedor productivo. Configura el Integrator ID personal en `MERCADOPAGO_LIVE_INTEGRATOR_ID` y la URL HTTPS del sitio en `FRONTEND_URL`. Mantén `MERCADOPAGO_LIVE_ENABLED=false` mientras preparas y revisas el despliegue.
+5. Comprueba que los servicios responden por HTTPS, que la ruta `/estado-pago` abre el frontend y que el administrador puede listar reservas. Comprueba con datos de prueba los flujos de acreditación, cancelación y reembolso. El simulador puede confirmar que Mercado Pago llega al endpoint, pero no sustituye una orden que pertenezca a la aplicación y a una reserva existente.
+6. Para abrir el checkout real, desactiva `MERCADOPAGO_TEST_ENABLED`, `CULQI_TEST_ENABLED`, `IZIPAY_SANDBOX_ENABLED`, `IZIPAY_MANUAL_ENABLED` y `PAYMENT_DEMO_ENABLED`. Después configura `MERCADOPAGO_LIVE_ENABLED=true`. El backend impide habilitar el cobro real junto con esos modos.
+7. Cuando el titular autorice la primera transacción real, crea una reserva controlada y comprueba el importe de la tarifa antes de pagar. Revisa la entrega del webhook y el estado acreditado en administración. Para pausar nuevas órdenes, vuelve a `MERCADOPAGO_LIVE_ENABLED=false` y conserva las credenciales y el webhook para conciliar órdenes anteriores.
+
+El retorno de Mercado Pago sirve para consultar el estado dentro de la misma sesión del navegador. La aplicación verifica el estado por API y el webhook valida su firma antes de actualizar el pago. El código de reserva por sí solo no otorga acceso al pago. La recuperación por correo sigue siendo un flujo independiente.

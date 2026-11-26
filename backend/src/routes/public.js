@@ -11,6 +11,7 @@ const payments = require('../services/culqiTestPayments');
 const { getCulqiTestConfig } = require('../services/culqiConfig');
 const izipay = require('../services/izipaySandbox');
 const mercadoPago = require('../services/mercadoPagoTest');
+const mercadoPagoLive = require('../services/mercadoPagoLive');
 
 // Destinos
 router.get('/destinations',       dest.list);
@@ -33,6 +34,18 @@ router.get('/mercadopago-test', (req, res) => {
 });
 router.get('/mercadopago-test/status', mercadoPago.status);
 router.post('/mercadopago-test/webhook', mercadoPago.webhook);
+router.get('/mercadopago', async (req, res, next) => {
+  try {
+    const enabled = process.env.MERCADOPAGO_LIVE_ENABLED === 'true' && mercadoPagoLive.config().enabled;
+    if (enabled && !await mercadoPagoLive.hasPaymentTable()) {
+      return res.status(503).json({ error: 'El cobro en línea no está disponible.' });
+    }
+    res.set('Cache-Control', 'no-store').json({ enabled });
+  } catch (err) { next(err); }
+});
+router.post('/mercadopago/webhook', mercadoPagoLive.webhook);
+router.get('/mercadopago/:codigo', mercadoPagoLive.purchaserPayment);
+router.post('/mercadopago/:codigo/checkout', mercadoPagoLive.purchaserPayment);
 router.get('/izipay-test', (req, res) => {
   try { res.set('Cache-Control', 'no-store').json({ enabled: Boolean(izipay.config()) }); }
   catch { res.status(503).json({ error: 'Izipay de prueba no disponible.' }); }
