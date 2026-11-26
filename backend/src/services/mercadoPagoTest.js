@@ -8,10 +8,11 @@ function config() {
   const token = process.env.MERCADOPAGO_TEST_ACCESS_TOKEN;
   const secret = process.env.MERCADOPAGO_TEST_WEBHOOK_SECRET;
   const sellerId = process.env.MERCADOPAGO_TEST_SELLER_ID;
+  const integratorId = process.env.MERCADOPAGO_TEST_INTEGRATOR_ID?.trim();
   if (!token || !secret || !/^\d+$/.test(sellerId || '')) {
     throw Object.assign(new Error('Configuración de Mercado Pago de prueba incompleta.'), { status: 503 });
   }
-  return { token, secret, sellerId };
+  return { token, secret, sellerId, integratorId };
 }
 
 async function api(path, options = {}) {
@@ -52,6 +53,7 @@ async function createOrder(reservation, payment) {
     description: `Tarifa de prueba ${reservation.codigo}`,
     payer: { email: reservation.guestEmail },
     config: { statement_descriptor: 'APURIMAC TUR' },
+    ...(c.integratorId ? { integration_data: { integrator_id: c.integratorId } } : {}),
     items: [{ title: `Tarifa de reserva ${reservation.codigo}`, unit_price: amount, quantity: 1 }],
   }) });
   const candidate = { ...payment, providerId: order.id, reservation };

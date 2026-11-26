@@ -28,6 +28,49 @@ test('valida la firma del webhook y rechaza modificaciones', () => {
   assert.equal(validSignature(signature, requestId, 'ORDREAL1', secret), false);
 });
 
+test('envía el Integrator ID al crear una orden si está configurado', async t => {
+  const env = {
+    MERCADOPAGO_TEST_ENABLED: 'true',
+    MERCADOPAGO_TEST_ACCESS_TOKEN: 'test-token',
+    MERCADOPAGO_TEST_WEBHOOK_SECRET: 'secret',
+    MERCADOPAGO_TEST_SELLER_ID: '123',
+    MERCADOPAGO_TEST_INTEGRATOR_ID: ' dev_integracion_prueba ',
+  };
+  const previous = Object.fromEntries(Object.keys(env).map(key => [key, process.env[key]]));
+  Object.assign(process.env, env);
+  t.after(() => {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  const requests = [];
+  const checkoutUrl = 'https://www.mercadopago.com.pe/checkout/v1/redirect?order_id=' + id;
+  t.mock.method(global, 'fetch', async (url, options) => {
+    if (new URL(url).pathname === '/users/me') return Response.json({ id: 123 });
+    assert.equal(new URL(url).pathname, '/v1/orders');
+    assert.equal(options.method, 'POST');
+    requests.push(JSON.parse(options.body));
+    return Response.json({ ...order, status: 'created', checkout_url: checkoutUrl }, { status: 201 });
+  });
+  const model = prisma.mercadoPagoTestPayment;
+  const originalUpdate = model.update;
+  model.update = async () => {};
+  t.after(() => {
+    if (originalUpdate === undefined) delete model.update;
+    else model.update = originalUpdate;
+  });
+
+  const reservation = { id: 1, codigo: 'APU-123', guestEmail: 'prueba@example.com' };
+  assert.equal(await mercadoPago.createOrder(reservation, { ...payment, id: 1 }), checkoutUrl);
+  delete process.env.MERCADOPAGO_TEST_INTEGRATOR_ID;
+  await mercadoPago.createOrder({ ...reservation, id: 2 }, { ...payment, id: 2 });
+
+  assert.deepEqual(requests[0].integration_data, { integrator_id: 'dev_integracion_prueba' });
+  assert.equal(Object.hasOwn(requests[1], 'integration_data'), false);
+});
+
 test('el webhook firmado consulta la orden al proveedor antes de actualizarla', async () => {
   const previous = { ...process.env };
   const originalFetch = global.fetch;
