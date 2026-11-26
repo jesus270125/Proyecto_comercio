@@ -39,6 +39,7 @@ async function create(req, res, next) {
 
     // Verificar que el recurso existe y está publicado
     let precioUnitario;
+    let nombreServicio;
     let noches = null;
 
     if (tipo === 'EXPERIENCIA') {
@@ -48,6 +49,7 @@ async function create(req, res, next) {
       });
       if (!exp) return res.status(404).json({ error: 'Experiencia no encontrada o no disponible.' });
       precioUnitario = parseFloat(exp.price);
+      nombreServicio = exp.nombre;
     } else {
       const acc = await prisma.accommodation.findFirst({
         where: { id: parseInt(accommodationId), publicado: true },
@@ -58,6 +60,7 @@ async function create(req, res, next) {
         return res.status(400).json({ error: `El hospedaje tiene capacidad máxima de ${acc.capacity} personas.` });
       noches = calcNoches(fechaLlegada, fechaSalida);
       precioUnitario = parseFloat(acc.price);
+      nombreServicio = acc.nombre;
     }
 
     // Calcular importes en el servidor
@@ -74,6 +77,10 @@ async function create(req, res, next) {
     if (testConfig && (depositCents < 600 || depositCents > 50000)) {
       return res.status(400).json({ error: 'La prueba con billetera requiere una tarifa entre S/ 6 y S/ 500.' });
     }
+    const comprador = mpConfig && req.user?.id ? await prisma.user.findFirst({
+      where: { id: req.user.id, email: guestEmail.trim().toLowerCase() },
+      select: { createdAt: true },
+    }) : null;
     const paymentToken = (testConfig || iziConfig || mpConfig) ? crypto.randomBytes(32).toString('hex') : null;
 
     // Generar código único (reintento en caso de colisión)
@@ -117,7 +124,11 @@ async function create(req, res, next) {
     if (mpConfig) {
       try {
         const payment = await prisma.mercadoPagoTestPayment.findUnique({ where: { reservationId: reservation.id } });
-        const url = await mercadoPago.createOrder(reservation, payment);
+        const url = await mercadoPago.createOrder(reservation, payment, {
+          nombreServicio,
+          fechaRegistro: comprador?.createdAt,
+          usarDocumentoDePrueba: req.body.mercadoPagoTestDocument === true,
+        });
         mercadoPagoTest = { url, accessToken: paymentToken, amountCents: depositCents };
       } catch {
         return res.status(502).json({ error: `No se pudo iniciar el pago de prueba. La solicitud ${reservation.codigo} quedó pendiente; contacta al administrador antes de intentar nuevamente.` });

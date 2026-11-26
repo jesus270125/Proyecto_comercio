@@ -1,5 +1,6 @@
 // Checkout Pro Orders: exclusivo para pruebas, no habilita cobros reales.
 const crypto = require('node:crypto');
+const { MercadoPagoConfig, Order } = require('mercadopago');
 const prisma = require('../config/database');
 const { hashToken } = require('./culqiTestPayments');
 
@@ -15,17 +16,21 @@ function config() {
   return { token, secret, sellerId, integratorId };
 }
 
-async function api(path, options = {}) {
-  const c = config();
-  if (!c) throw Object.assign(new Error('Mercado Pago de prueba no está habilitado.'), { status: 503 });
-  const response = await fetch('https://api.mercadopago.com' + path, {
-    ...options,
-    headers: { Authorization: `Bearer ${c.token}`, 'Content-Type': 'application/json', ...options.headers },
+async function getSeller(token) {
+  const response = await fetch('https://api.mercadopago.com/users/me', {
+    headers: { Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(15000),
   });
   const data = await response.json().catch(() => null);
   if (!response.ok || !data) throw Object.assign(new Error('Mercado Pago no pudo procesar la solicitud de prueba.'), { status: 502 });
   return data;
+}
+
+function ordersClient(token) {
+  return new Order(new MercadoPagoConfig({
+    accessToken: token,
+    options: { timeout: 15000, maxRetries: 0 },
+  }));
 }
 
 function verifyOrder(order, payment, sellerId) {
@@ -42,20 +47,36 @@ function verifyOrder(order, payment, sellerId) {
   return 'PENDIENTE';
 }
 
-async function createOrder(reservation, payment) {
+async function createOrder(reservation, payment, { nombreServicio, fechaRegistro, usarDocumentoDePrueba } = {}) {
   const c = config();
+  if (!c) throw Object.assign(new Error('Mercado Pago de prueba no está habilitado.'), { status: 503 });
   // El identificador debe ser el de la cuenta de vendedor de prueba de la aplicación.
-  const seller = await api('/users/me');
+  const seller = await getSeller(c.token);
   if (String(seller.id) !== c.sellerId) throw new Error('La cuenta no coincide con el vendedor de prueba configurado.');
   const amount = (payment.amountCents / 100).toFixed(2);
-  const order = await api('/v1/orders', { method: 'POST', headers: { 'X-Idempotency-Key': `reserva-test-${reservation.id}` }, body: JSON.stringify({
-    type: 'online', processing_mode: 'manual', total_amount: amount, external_reference: reservation.codigo,
-    description: `Tarifa de prueba ${reservation.codigo}`,
-    payer: { email: reservation.guestEmail },
-    config: { statement_descriptor: 'APURIMAC TUR' },
-    ...(c.integratorId ? { integration_data: { integrator_id: c.integratorId } } : {}),
-    items: [{ title: `Tarifa de reserva ${reservation.codigo}`, unit_price: amount, quantity: 1 }],
-  }) });
+  const order = await ordersClient(c.token).create({
+    requestOptions: { idempotencyKey: `reserva-test-${reservation.id}` },
+    body: {
+      type: 'online', processing_mode: 'manual', total_amount: amount, external_reference: reservation.codigo,
+      description: `Tarifa de prueba ${reservation.codigo}`,
+      payer: {
+        email: reservation.guestEmail,
+        first_name: reservation.guestNombre?.trim(),
+        last_name: reservation.guestApellido?.trim(),
+        ...(usarDocumentoDePrueba ? { identification: { type: 'DNI', number: '123456789' } } : {}),
+      },
+      config: { statement_descriptor: 'APURIMAC TUR' },
+      ...(c.integratorId ? { integration_data: { integrator_id: c.integratorId } } : {}),
+      ...(fechaRegistro ? { additional_info: { 'payer.registration_date': fechaRegistro.toISOString() } } : {}),
+      items: [{
+        title: `Tarifa de reserva ${reservation.codigo}`,
+        description: nombreServicio ? `Tarifa del 5 % por reservar ${nombreServicio}.` : 'Tarifa del 5 % por reservar un servicio turístico.',
+        category_id: 'travel',
+        unit_price: amount,
+        quantity: 1,
+      }],
+    },
+  });
   const candidate = { ...payment, providerId: order.id, reservation };
   if (verifyOrder(order, candidate, c.sellerId) !== 'PENDIENTE') throw new Error('Estado inicial inválido.');
   const url = new URL(order.checkout_url);
@@ -66,8 +87,12 @@ async function createOrder(reservation, payment) {
 
 async function reconcile(payment) {
   if (!payment.providerId) return payment;
-  const order = await api(`/v1/orders/${encodeURIComponent(payment.providerId)}`);
-  const status = verifyOrder(order, payment, config().sellerId);
+  const c = config();
+  if (!c) throw Object.assign(new Error('Mercado Pago de prueba no está habilitado.'), { status: 503 });
+  const order = await ordersClient(c.token).get({ id: payment.providerId }).catch(() => {
+    throw Object.assign(new Error('Mercado Pago no pudo consultar la orden de prueba.'), { status: 502 });
+  });
+  const status = verifyOrder(order, payment, c.sellerId);
   // Evita que consultas simultáneas sobrescriban un estado más reciente.
   await prisma.mercadoPagoTestPayment.updateMany({ where: { id: payment.id, updatedAt: payment.updatedAt }, data: { status } });
   return prisma.mercadoPagoTestPayment.findUnique({ where: { id: payment.id }, include: { reservation: true } });

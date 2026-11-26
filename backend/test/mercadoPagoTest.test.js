@@ -28,7 +28,7 @@ test('valida la firma del webhook y rechaza modificaciones', () => {
   assert.equal(validSignature(signature, requestId, 'ORDREAL1', secret), false);
 });
 
-test('envía el Integrator ID al crear una orden si está configurado', async t => {
+test('crea una orden con el SDK y envía los datos disponibles del comprador y del artículo', async t => {
   const env = {
     MERCADOPAGO_TEST_ENABLED: 'true',
     MERCADOPAGO_TEST_ACCESS_TOKEN: 'test-token',
@@ -51,6 +51,9 @@ test('envía el Integrator ID al crear una orden si está configurado', async t 
     if (new URL(url).pathname === '/users/me') return Response.json({ id: 123 });
     assert.equal(new URL(url).pathname, '/v1/orders');
     assert.equal(options.method, 'POST');
+    const headers = new Headers(options.headers);
+    assert.equal(headers.get('x-idempotency-key'), `reserva-test-${requests.length + 1}`);
+    assert.match(headers.get('user-agent'), /mercadopago/i);
     requests.push(JSON.parse(options.body));
     return Response.json({ ...order, status: 'created', checkout_url: checkoutUrl }, { status: 201 });
   });
@@ -62,13 +65,25 @@ test('envía el Integrator ID al crear una orden si está configurado', async t 
     else model.update = originalUpdate;
   });
 
-  const reservation = { id: 1, codigo: 'APU-123', guestEmail: 'prueba@example.com' };
-  assert.equal(await mercadoPago.createOrder(reservation, { ...payment, id: 1 }), checkoutUrl);
+  const reservation = { id: 1, codigo: 'APU-123', guestEmail: 'prueba@example.com', guestNombre: ' Ana ', guestApellido: ' Prueba ' };
+  const fechaRegistro = new Date('2026-10-01T13:00:00.000Z');
+  assert.equal(await mercadoPago.createOrder(reservation, { ...payment, id: 1 }, {
+    nombreServicio: 'Laguna de Pacucha', fechaRegistro, usarDocumentoDePrueba: true,
+  }), checkoutUrl);
   delete process.env.MERCADOPAGO_TEST_INTEGRATOR_ID;
   await mercadoPago.createOrder({ ...reservation, id: 2 }, { ...payment, id: 2 });
 
   assert.deepEqual(requests[0].integration_data, { integrator_id: 'dev_integracion_prueba' });
+  assert.deepEqual(requests[0].payer, {
+    email: 'prueba@example.com', first_name: 'Ana', last_name: 'Prueba',
+    identification: { type: 'DNI', number: '123456789' },
+  });
+  assert.deepEqual(requests[0].additional_info, { 'payer.registration_date': fechaRegistro.toISOString() });
+  assert.equal(requests[0].items[0].category_id, 'travel');
+  assert.equal(requests[0].items[0].description, 'Tarifa del 5 % por reservar Laguna de Pacucha.');
   assert.equal(Object.hasOwn(requests[1], 'integration_data'), false);
+  assert.equal(Object.hasOwn(requests[1], 'additional_info'), false);
+  assert.equal(Object.hasOwn(requests[1].payer, 'identification'), false);
 });
 
 test('el webhook firmado consulta la orden al proveedor antes de actualizarla', async () => {
@@ -79,7 +94,7 @@ test('el webhook firmado consulta la orden al proveedor antes de actualizarla', 
   const current = { ...payment, id: 1, updatedAt: new Date(), status: 'PENDIENTE' };
   let requests = 0, updates = 0;
   Object.assign(process.env, { MERCADOPAGO_TEST_ENABLED: 'true', MERCADOPAGO_TEST_ACCESS_TOKEN: 'test-token', MERCADOPAGO_TEST_SELLER_ID: '123', MERCADOPAGO_TEST_WEBHOOK_SECRET: 'secret' });
-  global.fetch = async () => { requests++; return { ok: true, json: async () => order }; };
+  global.fetch = async () => { requests++; return Response.json(order); };
   prisma.mercadoPagoTestPayment.findUnique = async () => current;
   prisma.mercadoPagoTestPayment.updateMany = async ({ data }) => { updates++; assert.equal(data.status, 'PAGADA_PRUEBA'); return { count: 1 }; };
   const ts = '123', requestId = 'request';

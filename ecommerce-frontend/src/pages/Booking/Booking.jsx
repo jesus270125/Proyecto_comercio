@@ -19,6 +19,7 @@ export default function Booking() {
   const [manualPayment, setManualPayment] = useState(false);
   const [izipayTestEnabled, setIzipayTestEnabled] = useState(false);
   const [mercadoPagoTestEnabled, setMercadoPagoTestEnabled] = useState(false);
+  const [mercadoPagoTestDocument, setMercadoPagoTestDocument] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -99,6 +100,7 @@ export default function Booking() {
         fechaSalida: form.salida,
         personas: parseInt(form.personas, 10) || 1,
         pagoSimulado: demoEnabled && !culqiTest && !izipayTestEnabled && !mercadoPagoTestEnabled,
+        ...(mercadoPagoTestEnabled && mercadoPagoTestDocument ? { mercadoPagoTestDocument: true } : {}),
         ...(izipayTestEnabled ? { izipayBilling: { street: form.street, postalCode: form.postalCode, city: form.city, state: form.state, country: form.country.toUpperCase(), documentType: form.documentType, document: form.document } } : {}),
       };
 
@@ -221,6 +223,16 @@ export default function Booking() {
               </div>
             </section>
 
+            {mercadoPagoTestEnabled && (
+              <section className="booking-section" aria-labelledby="mp-test-data">
+                <h2 className="booking-section__title" id="mp-test-data">Datos de pago de prueba</h2>
+                <label>
+                  <input type="checkbox" checked={mercadoPagoTestDocument}
+                    onChange={event => setMercadoPagoTestDocument(event.target.checked)} />
+                  {' '}Usar el documento ficticio de Mercado Pago
+                </label>
+              </section>
+            )}
             {izipayTestEnabled && <section className="booking-section" aria-labelledby="billing-data">
               <h2 className="booking-section__title" id="billing-data">Datos de facturación de prueba</h2>
               <p>En pruebas usa únicamente datos ficticios y tarjetas de prueba.</p>
