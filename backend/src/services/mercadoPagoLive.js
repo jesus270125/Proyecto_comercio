@@ -126,11 +126,7 @@ async function createOrder(payment) {
   if (!settings?.enabled) throw fail('El cobro de nuevas reservas está desactivado.', 503);
   if (payment.providerId) return payment;
   if (payment.reservation.estado !== 'PENDIENTE') throw fail('La reserva ya no admite un nuevo checkout.', 409);
-  const seller = await getSeller(settings.token);
-  if (String(seller.id) !== settings.sellerId || seller.site_id !== 'MPE' || !Array.isArray(seller.tags) ||
-      seller.tags.includes('test_user') || /@testuser\.com$/i.test(seller.email || '')) {
-    throw fail('La credencial no corresponde a la cuenta vendedora de producción en Perú.');
-  }
+  await verifySeller(settings);
   const order = await ordersClient(settings.token).create({
     requestOptions: { idempotencyKey: `apurimac-live-${payment.reservation.codigo}` },
     body: orderBody(payment, settings),
@@ -146,6 +142,16 @@ async function createOrder(payment) {
     data: { providerId: order.id, paymentUrl: url.href, status, version: { increment: 1 } },
   });
   return prisma.mercadoPagoPayment.findUnique({ where: { id: payment.id }, include: { reservation: true } });
+}
+
+async function verifySeller(settings = config()) {
+  if (!settings) return false;
+  const seller = await getSeller(settings.token);
+  if (String(seller.id) !== settings.sellerId || seller.site_id !== 'MPE' || !Array.isArray(seller.tags) ||
+      seller.tags.includes('test_user') || /@testuser\.com$/i.test(seller.email || '')) {
+    throw fail('La credencial no corresponde a la cuenta vendedora de producción en Perú.');
+  }
+  return true;
 }
 
 async function reconcile(payment) {
@@ -242,4 +248,4 @@ async function adminAction(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { hasPaymentTable, migratePaymentTable, config, createOrder, verifyOrder, orderBody, publicPayment, purchaserPayment, webhook, adminAction };
+module.exports = { hasPaymentTable, migratePaymentTable, config, createOrder, verifySeller, verifyOrder, orderBody, publicPayment, purchaserPayment, webhook, adminAction };

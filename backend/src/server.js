@@ -3,7 +3,7 @@
 require('dotenv').config();
 const app    = require('./app');
 const prisma = require('./config/database');
-const { migratePaymentTable } = require('./services/mercadoPagoLive');
+const { migratePaymentTable, verifySeller } = require('./services/mercadoPagoLive');
 
 const PORT = process.env.PORT || 4000;
 
@@ -35,6 +35,14 @@ async function main() {
       console.log('Tabla de Mercado Pago productivo disponible.');
     } catch {
       console.warn('No se pudo preparar la tabla de Mercado Pago productivo. El flujo de cobro permanecerá indisponible hasta aplicar la migración.');
+    }
+    if (process.env.MERCADOPAGO_LIVE_ACCESS_TOKEN) {
+      try {
+        await verifySeller();
+        console.log('Mercado Pago productivo: cuenta vendedora verificada.');
+      } catch {
+        console.warn('Mercado Pago productivo: no se pudo verificar la cuenta vendedora.');
+      }
     }
   }
 
