@@ -1,4 +1,6 @@
 const { WebhookSignatureValidator } = require('mercadopago');
+const { readFile } = require('node:fs/promises');
+const path = require('node:path');
 const prisma = require('../config/database');
 const { hashToken } = require('./culqiTestPayments');
 const { getSeller, ordersClient } = require('./mercadoPagoTest');
@@ -24,6 +26,15 @@ async function hasPaymentTable() {
   paymentTable = Number(result.total) === 1;
   checkedUntil = Date.now() + 60000;
   return paymentTable;
+}
+
+async function migratePaymentTable() {
+  if (await hasPaymentTable()) return;
+  // DDL estático del repositorio, sin entrada de usuarios ni secretos interpolados.
+  const migration = await readFile(path.join(__dirname, '../../prisma/mercadopago_live.sql'), 'utf8');
+  await prisma.$executeRawUnsafe(migration);
+  checkedUntil = 0;
+  if (!await hasPaymentTable()) throw fail('No se pudo inicializar la tabla de pagos.');
 }
 
 function config() {
@@ -231,4 +242,4 @@ async function adminAction(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { hasPaymentTable, config, createOrder, verifyOrder, orderBody, publicPayment, purchaserPayment, webhook, adminAction };
+module.exports = { hasPaymentTable, migratePaymentTable, config, createOrder, verifyOrder, orderBody, publicPayment, purchaserPayment, webhook, adminAction };

@@ -3,6 +3,7 @@
 require('dotenv').config();
 const app    = require('./app');
 const prisma = require('./config/database');
+const { migratePaymentTable } = require('./services/mercadoPagoLive');
 
 const PORT = process.env.PORT || 4000;
 
@@ -26,6 +27,15 @@ async function main() {
   } catch (err) {
     console.error('❌ Error al conectar con MySQL:', err.message);
     process.exit(1);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      await migratePaymentTable();
+      console.log('Tabla de Mercado Pago productivo disponible.');
+    } catch {
+      console.warn('No se pudo preparar la tabla de Mercado Pago productivo. El flujo de cobro permanecerá indisponible hasta aplicar la migración.');
+    }
   }
 
   app.listen(PORT, () => {
