@@ -43,9 +43,16 @@ router.get('/mercadopago', async (req, res, next) => {
     res.set('Cache-Control', 'no-store').json({ enabled });
   } catch (err) { next(err); }
 });
+router.get('/mercadopago/piloto', optionalAuth, async (req, res, next) => {
+  try {
+    if (!mercadoPagoLive.isPilotAdmin(req.user)) return res.sendStatus(404);
+    const enabled = Boolean(mercadoPagoLive.config()) && await mercadoPagoLive.hasPaymentTable();
+    return res.set('Cache-Control', 'no-store').json({ enabled });
+  } catch (err) { next(err); }
+});
 router.post('/mercadopago/webhook', mercadoPagoLive.webhook);
-router.get('/mercadopago/:codigo', mercadoPagoLive.purchaserPayment);
-router.post('/mercadopago/:codigo/checkout', mercadoPagoLive.purchaserPayment);
+router.get('/mercadopago/:codigo', optionalAuth, mercadoPagoLive.purchaserPayment);
+router.post('/mercadopago/:codigo/checkout', optionalAuth, mercadoPagoLive.purchaserPayment);
 router.get('/izipay-test', (req, res) => {
   try { res.set('Cache-Control', 'no-store').json({ enabled: Boolean(izipay.config()) }); }
   catch { res.status(503).json({ error: 'Izipay de prueba no disponible.' }); }

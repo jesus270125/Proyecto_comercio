@@ -131,6 +131,7 @@ export const accommodationsService = {
 
 export const reservationsService = {
   async getMercadoPago() { return request('/mercadopago'); },
+  async getMercadoPagoPilot() { return request('/mercadopago/piloto'); },
   async getMercadoPagoStatus(code, token) {
     return request(`/mercadopago/${encodeURIComponent(code)}`, { headers: { 'X-Payment-Token': token } });
   },

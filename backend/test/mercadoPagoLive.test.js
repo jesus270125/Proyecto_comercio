@@ -18,7 +18,7 @@ const approved = { ...created, status: 'processed', status_detail: 'accredited',
 function mockEnv(t) {
   const values = {
     NODE_ENV: 'production', FRONTEND_URL: 'https://example.com',
-    MERCADOPAGO_LIVE_ENABLED: 'true', MERCADOPAGO_LIVE_ACCESS_TOKEN: 'APP_USR-mock',
+    MERCADOPAGO_LIVE_ENABLED: 'true', MERCADOPAGO_LIVE_PILOT_ENABLED: 'false', MERCADOPAGO_LIVE_ACCESS_TOKEN: 'APP_USR-mock',
     MERCADOPAGO_LIVE_SELLER_ID: '123', MERCADOPAGO_LIVE_APPLICATION_ID: '456',
     MERCADOPAGO_LIVE_WEBHOOK_SECRET: 'mock-secret', MERCADOPAGO_TEST_ENABLED: 'false',
     CULQI_TEST_ENABLED: 'false', IZIPAY_SANDBOX_ENABLED: 'false',
@@ -72,6 +72,22 @@ test('verifica la identidad y la cuantía de la orden antes de acreditar un pago
     { external_reference: 'APU-OTRA' }, { total_amount: '4.26' }, { total_paid_amount: '4.24' },
     { integration_data: { application_id: 'otra' } },
   ]) assert.throws(() => live.verifyOrder({ ...approved, ...change }, payment, settings));
+});
+
+test('el piloto mantiene el checkout cerrado para invitados y otros usuarios', async t => {
+  mockEnv(t);
+  process.env.MERCADOPAGO_LIVE_ENABLED = 'false';
+  process.env.MERCADOPAGO_LIVE_PILOT_ENABLED = 'true';
+  process.env.MERCADOPAGO_TEST_ENABLED = 'true';
+  const admin = { id: 44, role: 'ADMIN' };
+  const pilotPayment = { ...payment, reservation: { ...reservation, userId: admin.id }, paymentUrl: created.checkout_url };
+  assert.equal(live.config().enabled, false);
+  assert.equal(live.publicPayment(pilotPayment, admin).url, created.checkout_url);
+  for (const other of [undefined, { id: admin.id, role: 'USER' }, { id: 45, role: 'ADMIN' }]) {
+    assert.equal(live.publicPayment(pilotPayment, other).url, null);
+    await assert.rejects(live.createOrder({ ...pilotPayment, providerId: null }, other), /desactivado/);
+  }
+  assert.equal(await live.createOrder(pilotPayment, admin), pilotPayment);
 });
 
 test('crea el checkout con la tarifa, retorno sin credenciales e idempotencia por reserva', async t => {

@@ -13,3 +13,7 @@ Apurímac Turismo cobra en PEN la tarifa de servicio del 5 %. El saldo se coordi
 7. Cuando el titular autorice la primera transacción real, crea una reserva controlada y comprueba el importe de la tarifa antes de pagar. Revisa la entrega del webhook y el estado acreditado en administración. Para pausar nuevas órdenes, vuelve a `MERCADOPAGO_LIVE_ENABLED=false` y conserva las credenciales y el webhook para conciliar órdenes anteriores.
 
 El retorno de Mercado Pago sirve para consultar el estado dentro de la misma sesión del navegador. La aplicación verifica el estado por API y el webhook valida su firma antes de actualizar el pago. El código de reserva por sí solo no otorga acceso al pago. La recuperación por correo sigue siendo un flujo independiente.
+
+## Piloto privado
+
+Con `MERCADOPAGO_LIVE_ENABLED=false`, establece `MERCADOPAGO_LIVE_PILOT_ENABLED=true` para preparar una orden productiva desde una sesión de administración, manteniendo la opción de prueba para las visitas normales. Agrega `piloto=mercadopago` a los parámetros existentes de la página de reserva. El pago requiere que el comprador lo autorice en Mercado Pago. Después de acreditar y revisar la reserva, desactiva el piloto.

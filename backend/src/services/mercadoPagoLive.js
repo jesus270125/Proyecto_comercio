@@ -15,6 +15,15 @@ function configured() {
   return process.env.MERCADOPAGO_LIVE_ENABLED === 'true' || Boolean(process.env.MERCADOPAGO_LIVE_ACCESS_TOKEN);
 }
 
+function isPilotAdmin(user) {
+  return process.env.NODE_ENV === 'production' && process.env.MERCADOPAGO_LIVE_PILOT_ENABLED === 'true' &&
+    user?.role === 'ADMIN' && Number.isSafeInteger(user.id) && user.id > 0;
+}
+
+function canUsePilot(user, payment) {
+  return isPilotAdmin(user) && payment.reservation.userId === user.id;
+}
+
 let paymentTable;
 let checkedUntil = 0;
 async function hasPaymentTable() {
@@ -121,9 +130,11 @@ function orderBody(payment, settings) {
   };
 }
 
-async function createOrder(payment) {
+async function createOrder(payment, user) {
   const settings = config();
-  if (!settings?.enabled) throw fail('El cobro de nuevas reservas está desactivado.', 503);
+  if (!settings || (!settings.enabled && !canUsePilot(user, payment))) {
+    throw fail('El cobro de nuevas reservas está desactivado.', 503);
+  }
   if (payment.providerId) return payment;
   if (payment.reservation.estado !== 'PENDIENTE') throw fail('La reserva ya no admite un nuevo checkout.', 409);
   await verifySeller(settings);
@@ -177,12 +188,12 @@ async function reconcile(payment) {
   return prisma.mercadoPagoPayment.findUnique({ where: { id: payment.id }, include: { reservation: true } });
 }
 
-function publicPayment(payment) {
+function publicPayment(payment, user) {
   return {
     status: payment.status,
     amountCents: payment.amountCents,
     url: payment.status === 'PENDIENTE' && payment.reservation.estado !== 'CANCELADA' &&
-      process.env.MERCADOPAGO_LIVE_ENABLED === 'true' ? payment.paymentUrl : null,
+      (process.env.MERCADOPAGO_LIVE_ENABLED === 'true' || canUsePilot(user, payment)) ? payment.paymentUrl : null,
   };
 }
 
@@ -194,8 +205,8 @@ async function purchaserPayment(req, res, next) {
       where: { accessHash: hashToken(token) }, include: { reservation: true },
     });
     if (!payment || payment.reservation.codigo !== req.params.codigo) return res.sendStatus(404);
-    const current = req.method === 'POST' && !payment.providerId ? await createOrder(payment) : await reconcile(payment);
-    return res.set('Cache-Control', 'no-store').json(publicPayment(current));
+    const current = req.method === 'POST' && !payment.providerId ? await createOrder(payment, req.user) : await reconcile(payment);
+    return res.set('Cache-Control', 'no-store').json(publicPayment(current, req.user));
   } catch (err) { next(err); }
 }
 
@@ -217,8 +228,12 @@ async function webhook(req, res, next) {
     if (typeof id !== 'string' || !signedEvent(req, settings.secret, id)) return res.sendStatus(401);
     if (req.body?.type !== 'order' || req.body?.data?.id !== id) return res.sendStatus(400);
     const payment = await prisma.mercadoPagoPayment.findUnique({ where: { providerId: id }, include: { reservation: true } });
-    if (!payment) return res.sendStatus(503);
+    if (!payment) {
+      console.info('Mercado Pago productivo: notificación firmada sin reserva asociada.');
+      return res.sendStatus(503);
+    }
     await reconcile(payment);
+    console.info('Mercado Pago productivo: notificación firmada conciliada.');
     return res.sendStatus(200);
   } catch (err) { next(err); }
 }
@@ -248,4 +263,4 @@ async function adminAction(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { hasPaymentTable, migratePaymentTable, config, createOrder, verifySeller, verifyOrder, orderBody, publicPayment, purchaserPayment, webhook, adminAction };
+module.exports = { hasPaymentTable, migratePaymentTable, config, isPilotAdmin, createOrder, verifySeller, verifyOrder, orderBody, publicPayment, purchaserPayment, webhook, adminAction };

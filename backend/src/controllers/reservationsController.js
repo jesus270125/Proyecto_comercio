@@ -68,10 +68,14 @@ async function create(req, res, next) {
     const { subtotal, serviceFee, total, depositCents } = calculateReservationPricing(
       precioUnitario, p, tipo === 'HOSPEDAJE' ? noches : 1,
     );
-    const testConfig = getCulqiTestConfig();
-    const iziConfig = izipay.config();
-    const mpConfig = mercadoPago.config();
-    const live = process.env.MERCADOPAGO_LIVE_ENABLED === 'true' ? mercadoPagoLive.config() : null;
+    const pilot = req.body.mercadoPagoPilot === true;
+    if (pilot && !mercadoPagoLive.isPilotAdmin(req.user)) return res.sendStatus(403);
+    const testConfig = pilot ? null : getCulqiTestConfig();
+    const iziConfig = pilot ? null : izipay.config();
+    const mpConfig = pilot ? null : mercadoPago.config();
+    const live = pilot || process.env.MERCADOPAGO_LIVE_ENABLED === 'true' ? mercadoPagoLive.config() : null;
+    if (pilot && !live) return res.status(503).json({ error: 'El piloto de Mercado Pago no está configurado.' });
+    if (pilot && req.body.pagoSimulado) return res.status(400).json({ error: 'Selecciona un solo modo de pago.' });
     if (live && !await mercadoPagoLive.hasPaymentTable()) return res.status(503).json({ error: 'El cobro en línea no está disponible.' });
     if ([testConfig, iziConfig, mpConfig, live].filter(Boolean).length > 1) return res.status(503).json({ error: 'Hay más de un proveedor de pago habilitado.' });
     if (live && req.body.mercadoPagoLiveAccepted !== true) return res.status(409).json({ error: 'Recarga la página y revisa la tarifa para continuar con el pago.' });
@@ -136,8 +140,8 @@ async function create(req, res, next) {
     let mercadoPagoPayment = null;
     if (live) {
       const payment = { ...reservation.mercadoPago, reservation };
-      const current = await mercadoPagoLive.createOrder(payment).catch(() => payment);
-      mercadoPagoPayment = { ...mercadoPagoLive.publicPayment(current), accessToken: paymentToken };
+      const current = await mercadoPagoLive.createOrder(payment, pilot ? req.user : undefined).catch(() => payment);
+      mercadoPagoPayment = { ...mercadoPagoLive.publicPayment(current, pilot ? req.user : undefined), accessToken: paymentToken };
     }
     if (mpConfig) {
       try {

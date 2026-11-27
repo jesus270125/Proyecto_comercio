@@ -7,6 +7,7 @@ import './Booking.css';
 
 export default function Booking() {
   const [searchParams] = useSearchParams();
+  const piloto = searchParams.get('piloto') === 'mercadopago';
   const navigate = useNavigate();
   const [form, setForm] = useState(() => ({ ...initialForm, llegada: searchParams.get('checkin') || '', salida: searchParams.get('checkout') || '', personas: searchParams.get('personas') || '2' }));
   const [today] = useState(() => new Date().toISOString().split('T')[0]);
@@ -20,6 +21,7 @@ export default function Booking() {
   const [izipayTestEnabled, setIzipayTestEnabled] = useState(false);
   const [mercadoPagoTestEnabled, setMercadoPagoTestEnabled] = useState(false);
   const [mercadoPagoEnabled, setMercadoPagoEnabled] = useState(false);
+  const [pilotEnabled, setPilotEnabled] = useState(false);
   const [mercadoPagoTestDocument, setMercadoPagoTestDocument] = useState(false);
 
   useEffect(() => {
@@ -36,6 +38,17 @@ export default function Booking() {
     reservationsService.getMercadoPago().then(result => { if (active) setMercadoPagoEnabled(result.enabled === true); }).catch(() => {});
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!piloto) return;
+    let active = true;
+    reservationsService.getMercadoPagoPilot()
+      .then(result => { if (active) setPilotEnabled(result.enabled === true); })
+      .catch(() => { if (active) setPilotEnabled(false); });
+    return () => { active = false; };
+  }, [piloto]);
+
+  const realCheckout = piloto ? pilotEnabled : mercadoPagoEnabled;
 
   const tipo   = searchParams.get('tipo') || 'experiencia';
   const itemId = searchParams.get('id');
@@ -74,14 +87,14 @@ export default function Booking() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!item) return;
+    if (!item || (piloto && !pilotEnabled)) return;
     const errs = validateForm(form);
-    if (izipayTestEnabled && (!form.street.trim() || !form.postalCode.trim() || !form.city.trim() || !form.state.trim() || !form.country.trim() || !form.document.trim())) errs.submit = 'Completa los datos de facturación para la prueba de Izipay.';
+    if (!realCheckout && izipayTestEnabled && (!form.street.trim() || !form.postalCode.trim() || !form.city.trim() || !form.state.trim() || !form.country.trim() || !form.document.trim())) errs.submit = 'Completa los datos de facturación para la prueba de Izipay.';
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    if (demoEnabled && !izipayTestEnabled && !mercadoPagoTestEnabled && !mercadoPagoEnabled && !paymentStep) {
+    if (demoEnabled && !izipayTestEnabled && !mercadoPagoTestEnabled && !realCheckout && !paymentStep) {
       setPaymentStep(true);
       return;
     }
@@ -101,10 +114,11 @@ export default function Booking() {
         fechaLlegada: form.llegada,
         fechaSalida: form.salida,
         personas: parseInt(form.personas, 10) || 1,
-        pagoSimulado: demoEnabled && !culqiTest && !izipayTestEnabled && !mercadoPagoTestEnabled && !mercadoPagoEnabled,
-        ...(mercadoPagoEnabled ? { mercadoPagoLiveAccepted: true } : {}),
-        ...(mercadoPagoTestEnabled && mercadoPagoTestDocument ? { mercadoPagoTestDocument: true } : {}),
-        ...(izipayTestEnabled ? { izipayBilling: { street: form.street, postalCode: form.postalCode, city: form.city, state: form.state, country: form.country.toUpperCase(), documentType: form.documentType, document: form.document } } : {}),
+        pagoSimulado: demoEnabled && !culqiTest && !izipayTestEnabled && !mercadoPagoTestEnabled && !realCheckout,
+        ...(realCheckout ? { mercadoPagoLiveAccepted: true } : {}),
+        ...(piloto ? { mercadoPagoPilot: true } : {}),
+        ...(!realCheckout && mercadoPagoTestEnabled && mercadoPagoTestDocument ? { mercadoPagoTestDocument: true } : {}),
+        ...(!realCheckout && izipayTestEnabled ? { izipayBilling: { street: form.street, postalCode: form.postalCode, city: form.city, state: form.state, country: form.country.toUpperCase(), documentType: form.documentType, document: form.document } } : {}),
       };
 
       const res = await reservationsService.create(payload);
@@ -132,7 +146,7 @@ export default function Booking() {
           izipayTest: res.data.izipayTest,
           mercadoPagoTest: res.data.mercadoPagoTest,
           mercadoPago,
-          manualPayment: manualPayment && !demoEnabled && !culqiTest && !izipayTestEnabled && !mercadoPagoTestEnabled && !mercadoPagoEnabled,
+          manualPayment: manualPayment && !demoEnabled && !culqiTest && !izipayTestEnabled && !mercadoPagoTestEnabled && !realCheckout,
         }
       });
     } catch (err) {
@@ -149,7 +163,7 @@ export default function Booking() {
           <span className="section-label">Formulario de reserva</span>
           <h1 className="booking-title">Registra tu solicitud</h1>
           <p className="booking-subtitle">
-            {mercadoPagoEnabled ? 'Paga la tarifa del 5 % con Mercado Pago. La reserva queda pendiente de confirmación y el saldo se coordina con el proveedor.' : mercadoPagoTestEnabled ? 'Entorno de prueba de Mercado Pago: solo datos de prueba. No se cobrará dinero real.' : izipayTestEnabled ? 'Entorno de prueba de Izipay: solo tarjetas de prueba. No se cobrará dinero real.' : culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : manualPayment ? 'Registra tu solicitud. Te contactaremos para coordinar el pago de la tarifa del 5 % y el saldo restante.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
+            {piloto ? (pilotEnabled ? 'Piloto privado de Mercado Pago. Si autorizas el pago en el checkout, se cobrará la tarifa real del 5 %.' : 'El piloto privado requiere una sesión de administración y que el piloto esté habilitado.') : realCheckout ? 'Paga la tarifa del 5 % con Mercado Pago. La reserva queda pendiente de confirmación y el saldo se coordina con el proveedor.' : mercadoPagoTestEnabled ? 'Entorno de prueba de Mercado Pago: solo datos de prueba. No se cobrará dinero real.' : izipayTestEnabled ? 'Entorno de prueba de Izipay: solo tarjetas de prueba. No se cobrará dinero real.' : culqiTest ? 'Entorno de prueba: pagarás la tarifa con Culqi de prueba. No se realizará un cobro real.' : demoEnabled ? 'Prueba el flujo de reserva y adelanto. No se realizará ningún cobro real.' : manualPayment ? 'Registra tu solicitud. Te contactaremos para coordinar el pago de la tarifa del 5 % y el saldo restante.' : 'Completa los datos. La reserva es simulada — sin pago real en esta versión.'}
           </p>
         </div>
 
@@ -231,7 +245,7 @@ export default function Booking() {
               </div>
             </section>
 
-            {mercadoPagoTestEnabled && (
+            {!realCheckout && !piloto && mercadoPagoTestEnabled && (
               <section className="booking-section" aria-labelledby="mp-test-data">
                 <h2 className="booking-section__title" id="mp-test-data">Datos de pago de prueba</h2>
                 <label>
@@ -241,7 +255,7 @@ export default function Booking() {
                 </label>
               </section>
             )}
-            {izipayTestEnabled && <section className="booking-section" aria-labelledby="billing-data">
+            {!realCheckout && !piloto && izipayTestEnabled && <section className="booking-section" aria-labelledby="billing-data">
               <h2 className="booking-section__title" id="billing-data">Datos de facturación de prueba</h2>
               <p>En pruebas usa únicamente datos ficticios y tarjetas de prueba.</p>
               <div className="booking-grid-2">
@@ -322,7 +336,7 @@ export default function Booking() {
             </section>
 
             <div className="booking-actions">
-              {demoEnabled && !izipayTestEnabled && !mercadoPagoTestEnabled && paymentStep && (
+              {demoEnabled && !izipayTestEnabled && !mercadoPagoTestEnabled && !realCheckout && !piloto && paymentStep && (
                 <div role="status" style={{ padding: '1rem', marginBottom: '1rem', background: '#fff8e1', borderRadius: '0.5rem' }}>
                   <strong>Simulación de pago</strong>
                   <p>Adelanto de prueba: S/ {serviceFee.toFixed(2)}. Saldo de referencia: S/ {subtotal.toFixed(2)}.</p>
@@ -333,7 +347,7 @@ export default function Booking() {
               <button
                 type="submit"
                 className="btn btn-primary btn-lg booking-submit"
-                disabled={submitting || !item}
+                disabled={submitting || !item || (piloto && !pilotEnabled)}
                 id="booking-submit-btn"
               >
                 {submitting ? (
@@ -343,7 +357,7 @@ export default function Booking() {
                   </>
                 ) : (
                   <>
-                    {mercadoPagoEnabled ? 'Registrar solicitud y continuar al pago' : mercadoPagoTestEnabled || izipayTestEnabled || culqiTest ? 'Continuar al pago de prueba' : demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
+                    {piloto && !pilotEnabled ? 'Piloto privado' : realCheckout ? 'Registrar solicitud y continuar al pago' : mercadoPagoTestEnabled || izipayTestEnabled || culqiTest ? 'Continuar al pago de prueba' : demoEnabled ? (paymentStep ? 'Simular pago y registrar solicitud' : 'Continuar a la simulación de pago') : 'Registrar solicitud'}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                     </svg>
@@ -351,7 +365,7 @@ export default function Booking() {
                 )}
               </button>
               <p className="booking-legal">
-                {mercadoPagoEnabled ? `Pagarás S/ ${serviceFee.toFixed(2)} a través de Mercado Pago.` : mercadoPagoTestEnabled || izipayTestEnabled ? 'La prueba utiliza datos de prueba; no se realizará ningún cargo real.' : culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : manualPayment && !demoEnabled ? 'La solicitud queda pendiente. El pago se coordinará mediante un enlace individual.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.'}
+                {realCheckout ? `Pagarás S/ ${serviceFee.toFixed(2)} a través de Mercado Pago.` : !piloto && (mercadoPagoTestEnabled || izipayTestEnabled ? 'La prueba utiliza datos de prueba; no se realizará ningún cargo real.' : culqiTest ? 'Solo prueba de billeteras: la tarifa debe estar entre S/ 6 y S/ 500. No se realizará ningún cargo real.' : manualPayment && !demoEnabled ? 'La solicitud queda pendiente. El pago se coordinará mediante un enlace individual.' : 'Se registrará una solicitud de prueba. No se realizará ningún cargo real.')}
               </p>
             </div>
           </form>
@@ -359,7 +373,7 @@ export default function Booking() {
           {/* Summary */}
           {item ? <BookingSummary
             manualPayment={manualPayment && !demoEnabled && !culqiTest && !izipayTestEnabled && !mercadoPagoTestEnabled}
-            mercadoPagoEnabled={mercadoPagoEnabled}
+            mercadoPagoEnabled={realCheckout}
             tipo={tipo}
             nombre={nombre}
             form={form}
