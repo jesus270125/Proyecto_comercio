@@ -210,14 +210,24 @@ async function purchaserPayment(req, res, next) {
   } catch (err) { next(err); }
 }
 
-function signedEvent(req, secret, id) {
+const diagnosticTimes = new Map();
+function pilotWebhookDiagnostic(reason) {
+  if (process.env.MERCADOPAGO_LIVE_PILOT_ENABLED !== 'true' || process.env.MERCADOPAGO_LIVE_ENABLED === 'true') return;
+  const now = Date.now();
+  if (now - (diagnosticTimes.get(reason) || 0) < 60000) return;
+  diagnosticTimes.set(reason, now);
+  console.info(`Mercado Pago productivo (piloto): ${reason}.`);
+}
+
+function invalidSignatureReason(req, secret, id) {
   const xSignature = req.get('x-signature');
   const xRequestId = req.get('x-request-id');
-  if (!liveOrderId.test(id || '') || !xRequestId) return false;
+  if (typeof id !== 'string' || !liveOrderId.test(id)) return 'ID de orden productiva ausente o inválido';
+  if (!xRequestId || !xSignature) return 'cabeceras de firma incompletas';
   try {
     WebhookSignatureValidator.validate({ xSignature, xRequestId, dataId: id.toLowerCase(), secret });
-    return true;
-  } catch { return false; }
+    return null;
+  } catch { return 'firma inválida'; }
 }
 
 async function webhook(req, res, next) {
@@ -225,8 +235,15 @@ async function webhook(req, res, next) {
     const settings = config();
     if (!settings) return res.sendStatus(404);
     const id = req.query['data.id'];
-    if (typeof id !== 'string' || !signedEvent(req, settings.secret, id)) return res.sendStatus(401);
-    if (req.body?.type !== 'order' || req.body?.data?.id !== id) return res.sendStatus(400);
+    const reason = invalidSignatureReason(req, settings.secret, id);
+    if (reason) {
+      pilotWebhookDiagnostic(reason);
+      return res.sendStatus(401);
+    }
+    if (req.body?.type !== 'order' || req.body?.data?.id !== id) {
+      pilotWebhookDiagnostic('cuerpo de notificación incompatible');
+      return res.sendStatus(400);
+    }
     const payment = await prisma.mercadoPagoPayment.findUnique({ where: { providerId: id }, include: { reservation: true } });
     if (!payment) {
       console.info('Mercado Pago productivo: notificación firmada sin reserva asociada.');
